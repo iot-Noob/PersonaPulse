@@ -24,6 +24,10 @@
     {
       "file": "putin.json",
       "subname": "Valadmir Putin"
+    },
+     {
+      "file": "Dexter.json",
+      "subname": "Dexter Morgan"
     }
   ]
 }
