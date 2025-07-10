@@ -1,0 +1,32 @@
+{
+  "manifest": [
+    {
+      "file": "ags_funny.json",
+      "subname": "Ask Ghanji Swag Funny"
+    },
+    {
+      "file": "ags_tp.json",
+      "subname": "Ask Ghanji Swag Improved"
+    },
+    {
+      "file": "bb_mcm.json",
+      "subname": "bb ki vines"
+    },
+    {
+      "file": "modi.json",
+      "subname": "Narindar Modi"
+    },
+    {
+      "file": "muhammad(pbuh).json",
+      "subname": "Muhammad(PBUH)"
+    },
+    {
+      "file": "nithen_yahu.json",
+      "subname": "Benjimen Nithen Yahu"
+    },
+    {
+      "file": "putin.json",
+      "subname": "Valadmir Putin"
+    }
+  ]
+}

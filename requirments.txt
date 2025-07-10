@@ -1,0 +1,16 @@
+fastapi
+uvicorn
+httpx
+openai
+email_validator
+python-dotenv
+python-multipart
+PyYAML
+pydantic
+Jinja2
+typer
+click
+rich
+sentry-sdk
+toml
+uvicorn

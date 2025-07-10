@@ -1,0 +1,55 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environments
+venv/
+.venv/
+ENV/
+env/
+*/venv/
+*/.venv/
+
+# VSCode settings
+.vscode/
+
+# Python environment
+*.env
+.env
+.env.*
+
+# IDEs and editors
+.idea/
+*.sublime-project
+*.sublime-workspace
+
+# System files
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Testing / Coverage
+.coverage
+htmlcov/
+.tox/
+.nox/
+.pytest_cache/
+
+# Build artifacts
+build/
+dist/
+*.egg-info/
+
+# FastAPI auto-generated files (if any)
+*.db
+*.sqlite3
+
+# Node (if you mix frontend/backend)
+node_modules/
+
+# Manifest or cache files
+*.manifest.json
+.cache/
