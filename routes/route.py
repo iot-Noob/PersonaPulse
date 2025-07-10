@@ -5,13 +5,14 @@ from token import OP
 from Models.gpt_mod import OpenAIModel
 from fastapi import APIRouter, HTTPException
 from fastapi.responses import JSONResponse
-from Models.main_model import ChainRequest,RoleEnum
+from Models.main_model import ChainRequest,RoleEnum,Prompt_Input
 from Models.dyn_enum import get_character_enum
 from openai import OpenAI
 import os
 from dotenv import load_dotenv
 from contextlib import asynccontextmanager
 import json
+from uuid import uuid4
 from typing import Optional
 load_dotenv()
 base_dir = os.path.dirname(os.path.abspath(__file__))
@@ -40,20 +41,24 @@ async def lifespan(app: APIRouter):
 route = APIRouter(lifespan=lifespan)
 
 @route.post(path="/simple_prompt", tags=["Simple_prompt"])
-async def simple_prompt(role: RoleEnum, model: OpenAIModel, prompt: str, temperature: float = 0.3,character: Optional[gc] = None):
+async def simple_prompt(role: RoleEnum, model: OpenAIModel, prompt: Prompt_Input, temperature: float = 0.3,character: Optional[gc] = None):
     try:
-        
+      
         if not (0.0 <= temperature <= 1.0):
             raise HTTPException(status_code=400, detail="Temperature must be between 0.0 and 1.0")
 
         messages = [
             {
                 "role": role.value,  # Convert enum to string
-                "content": prompt
+                "content": prompt.prompt,
+          
             }
         ]
+        if role.value == "tool":
+            messages[0]["tool_call_id"] = str(uuid4())
         msg2=[]
         if character is None:
+
             res = client.chat.completions.create(
                 model=model.value,
                 messages=messages,
@@ -70,16 +75,19 @@ async def simple_prompt(role: RoleEnum, model: OpenAIModel, prompt: str, tempera
                             with open(bpa,'r',encoding='utf-8') as f:
                               persona:dict=json.load(f)
                             msg2.append(persona)
-                            msg2.append({"role":role.value,"content":prompt})
+                            msg2.append({"role":role.value,"content":prompt.prompt,"tool_call_id":str(uuid4())})
+                           
                             res = client.chat.completions.create(
                                 model=model.value,
                                 messages=msg2,
                                 temperature=temperature,
+                                
                             )
                         else:
                             raise HTTPException(404,"Path invalid")
         if not res:
             raise JSONResponse("No response",200)
+         
         return {
             "response": res.choices[0].message.content,
             "model": model,

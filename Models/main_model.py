@@ -17,3 +17,6 @@ class ChainRequest(BaseModel):
     model: OpenAIModel
     system: Step
     chain: List[Dict[str, Step]]
+
+class Prompt_Input(BaseModel):
+    prompt:str
