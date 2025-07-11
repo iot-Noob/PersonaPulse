@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import axios from "axios";
 
 const API_BASE_URL = import.meta.env.VITE_API_ENDPOINT;
@@ -17,100 +17,91 @@ function App() {
   const [chains, setChains] = useState({});
   const [selectedChain, setSelectedChain] = useState(null);
   const [newChainName, setNewChainName] = useState("");
+  const [chatHistory, setChatHistory] = useState([]);
+
+  const chatEndRef = useRef(null);
 
   useEffect(() => {
-    try {
-      axios
-        .get(`${API_BASE_URL}/get_model`)
-        .then((res) => setModels(res?.data?.models))
-        .catch((err) => {
-          console.error(`Error occurred while getting data from API:`, err);
-          // Optionally show a UI message or set error state here
-        });
-      axios
-        .get(`${API_BASE_URL}/get_role`)
-        .then((res) => setRoles(res?.data?.Roles))
-        .catch((err) => {
-          console.error(`Error occurred while getting data from API:`, err);
-          // Optionally show a UI message or set error state here
-        });
+    axios.get(`${API_BASE_URL}/get_model`)
+      .then((res) => setModels(res?.data?.models))
+      .catch((err) => console.error("Error getting models", err));
 
-      axios
-        .get(`${API_BASE_URL}/characters`)
-        .then((res) => setCharacters(res?.data?.characters))
-        .catch((err) => {
-          console.error(`Error occurred while getting data from API:`, err);
-          // Optionally show a UI message or set error state here
-        });
-    } catch (err) {
-      console.error(`Error occur fetc data form api`, err);
-    }
+    axios.get(`${API_BASE_URL}/get_role`)
+      .then((res) => setRoles(res?.data?.Roles))
+      .catch((err) => console.error("Error getting roles", err));
+
+    axios.get(`${API_BASE_URL}/characters`)
+      .then((res) => setCharacters(res?.data?.characters))
+      .catch((err) => console.error("Error getting characters", err));
   }, []);
- 
- const handleSubmit = async () => {
-  if (!selectedModel || !selectedRole) {
-    setError("Model and Role are required.");
-    return;
-  }
 
-  setLoading(true);
-  setError("");
+  useEffect(() => {
+    chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [chatHistory]);
 
-  try {
-    const chainKeys = Object.keys(chains);
-
-    if (chainKeys.length === 0) {
-      // No chain — simple prompt
-      const res = await axios.post(
-        `${API_BASE_URL}/simple_prompt`,
-        { prompt },
-        {
-          params: {
-            role: selectedRole,
-            model: selectedModel,
-            character: selectedCharacter || null,
-            temperature: 0.3,
-          },
-        }
-      );
-      setResponse(res.data.response);
-    } else {
-      // Build chain input format
-      const chainSteps = {};
-
-     
-      chainKeys.forEach((key) => {
-        chains[key].forEach((item) => {
-          const stepName = key;
-          chainSteps[stepName] = {
-            role: item.role,
-            prompt: item.prompt,
-          };
-         
-        });
-      });
-
-      const payload = {
-        model: selectedModel,
-        system: {
-          role: selectedRole,
-          prompt: prompt,
-        },
-        chain: [chainSteps],
-      };
-      console.log(payload)
-      const res = await axios.post(`${API_BASE_URL}/chain_response`, payload);
-      setResponse(res.data.response);
+  const handleSubmit = async () => {
+    if (!selectedModel || !selectedRole) {
+      setError("Model and Role are required.");
+      return;
     }
-  } catch (err) {
-    console.error("API error:", err);
-    setError("Failed to fetch response");
-  } finally {
-    setLoading(false);
-  }
-};
- 
- 
+
+    setLoading(true);
+    setError("");
+
+    try {
+      const chainKeys = Object.keys(chains);
+
+      if (chainKeys.length === 0) {
+        const res = await axios.post(
+          `${API_BASE_URL}/simple_prompt`,
+          { prompt },
+          {
+            params: {
+              role: selectedRole,
+              model: selectedModel,
+              character: selectedCharacter || null,
+              temperature: 0.3,
+            },
+          }
+        );
+        setResponse(res.data.response);
+        setChatHistory((prev) => [...prev, { user: prompt, bot: res.data.response }]);
+      } else {
+        const chainSteps = {};
+
+        chainKeys.forEach((key) => {
+          chains[key].forEach((item) => {
+            const stepName = key;
+            chainSteps[stepName] = {
+              role: item.role,
+              prompt: item.prompt,
+            };
+          });
+        });
+
+        const payload = {
+          model: selectedModel,
+          system: {
+            role: selectedRole,
+            prompt: prompt,
+          },
+          chain: [chainSteps],
+        };
+
+        const res = await axios.post(`${API_BASE_URL}/chain_response`, payload);
+        setResponse(res.data.response);
+        setChatHistory((prev) => [...prev, { user: prompt, bot: res.data.response }]);
+      }
+
+      setPrompt(""); // clear after submit
+    } catch (err) {
+      console.error("API error:", err);
+      setError("Failed to fetch response");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const addNewChain = () => {
     if (!newChainName.trim()) {
       setError("Chain name cannot be empty.");
@@ -147,7 +138,7 @@ function App() {
     setChains(newChains);
     if (selectedChain === chainName) setSelectedChain(null);
   };
- 
+
   return (
     <div className="flex flex-col h-screen bg-gradient-to-br from-gray-950 to-gray-900 text-white p-4 font-sans">
       <div className="mb-3 flex gap-2 items-center">
@@ -165,10 +156,7 @@ function App() {
 
       <div className="flex flex-wrap gap-2 mb-4">
         {Object.entries(chains).map(([chainName, items]) => (
-          <div
-            key={chainName}
-            className="flex flex-col bg-slate-800 rounded-xl p-2 max-w-sm text-xs shadow-md"
-          >
+          <div key={chainName} className="flex flex-col bg-slate-800 rounded-xl p-2 max-w-sm text-xs shadow-md">
             <div className="flex justify-between items-center">
               <input
                 className="bg-transparent font-semibold truncate max-w-[200px] outline-none text-white text-sm"
@@ -185,19 +173,11 @@ function App() {
                   setChains(newChains);
                 }}
               />
-              <button
-                className="text-red-400 hover:text-red-600"
-                onClick={() => removeChain(chainName)}
-              >
-                ✕
-              </button>
+              <button className="text-red-400 hover:text-red-600" onClick={() => removeChain(chainName)}>✕</button>
             </div>
             <div className="flex flex-wrap gap-1 mt-2">
               {items.map((item, idx) => (
-                <div
-                  key={idx}
-                  className="bg-gray-700 text-white rounded-full px-2 py-1 flex items-center gap-1 hover:bg-gray-600"
-                >
+                <div key={idx} className="bg-gray-700 text-white rounded-full px-2 py-1 flex items-center gap-1 hover:bg-gray-600">
                   <select
                     className="select select-xs bg-transparent text-xs text-white border-none"
                     value={item.role}
@@ -205,13 +185,9 @@ function App() {
                       updateChainItem(chainName, idx, "role", e.target.value)
                     }
                   >
-                    <option disabled value="">
-                      Role
-                    </option>
+                    <option disabled value="">Role</option>
                     {roles.map((r) => (
-                      <option key={r} value={r}>
-                        {r}
-                      </option>
+                      <option key={r} value={r}>{r}</option>
                     ))}
                   </select>
                   <input
@@ -236,13 +212,21 @@ function App() {
       </div>
 
       <div className="flex-1 overflow-auto space-y-4">
-        {response && (
-          <div className="chat chat-start">
-            <div className="chat-bubble bg-primary text-white text-lg shadow-lg max-w-xl">
-              {response}
+        {chatHistory.map((chat, index) => (
+          <div key={index}>
+            <div className="chat chat-end">
+              <div className="chat-bubble bg-base-200 text-black text-sm max-w-xl">
+                {chat.user}
+              </div>
+            </div>
+            <div className="chat chat-start">
+              <div className="chat-bubble bg-primary text-white text-sm max-w-xl">
+                {chat.bot}
+              </div>
             </div>
           </div>
-        )}
+        ))}
+        <div ref={chatEndRef} />
       </div>
 
       <div className="mt-4">
@@ -255,13 +239,8 @@ function App() {
             onChange={(e) => setPrompt(e.target.value)}
           />
           <div className="dropdown dropdown-top dropdown-end">
-            <label tabIndex={0} className="btn btn-outline">
-              ⚙️
-            </label>
-            <ul
-              tabIndex={0}
-              className="dropdown-content menu p-4 shadow-lg bg-white text-black rounded-box w-72 space-y-4"
-            >
+            <label tabIndex={0} className="btn btn-outline">⚙️</label>
+            <ul tabIndex={0} className="dropdown-content menu p-4 shadow-lg bg-white text-black rounded-box w-72 space-y-4">
               <li>
                 <label className="text-xs font-bold px-2">Model</label>
                 <select
@@ -269,29 +248,22 @@ function App() {
                   value={selectedModel}
                   onChange={(e) => setSelectedModel(e.target.value)}
                 >
-                  <option disabled value="">
-                    Select Model
-                  </option>
-                  {/* {models.map((m) => <option key={m}>{m}</option>)} */}
+                  <option disabled value="">Select Model</option>
                   {Array.isArray(models) &&
                     models.map((v, i) => (
-                      <option key={i} value={v}>
-                        {v}
-                      </option>
+                      <option key={i} value={v}>{v}</option>
                     ))}
                 </select>
               </li>
               <li>
-                <label className={`text-xs font-bold px-2  `}>Character</label>
-                <select 
-                    disabled={Object.keys(chains).length > 0}
-                  className={`select select-bordered w-full`}
+                <label className="text-xs font-bold px-2">Character</label>
+                <select
+                  disabled={Object.keys(chains).length > 0}
+                  className="select select-bordered w-full"
                   value={selectedCharacter}
                   onChange={(e) => setSelectedCharacter(e.target.value)}
                 >
-                  <option disabled value="">
-                    Select Character
-                  </option>
+                  <option disabled value="">Select Character</option>
                   {characters.map((c) => (
                     <option key={c}>{c}</option>
                   ))}
@@ -304,9 +276,7 @@ function App() {
                   value={selectedRole}
                   onChange={(e) => setSelectedRole(e.target.value)}
                 >
-                  <option disabled value="">
-                    Select Role
-                  </option>
+                  <option disabled value="">Select Role</option>
                   {roles.map((r) => (
                     <option key={r}>{r}</option>
                   ))}
@@ -314,11 +284,7 @@ function App() {
               </li>
             </ul>
           </div>
-          <button
-            className="btn btn-primary btn-lg"
-            onClick={handleSubmit}
-            disabled={loading}
-          >
+          <button className="btn btn-primary btn-lg" onClick={handleSubmit} disabled={loading}>
             {loading ? (
               <span className="loading loading-spinner"></span>
             ) : (
@@ -326,9 +292,7 @@ function App() {
             )}
           </button>
         </div>
-        {error && (
-          <div className="alert alert-error mt-4 shadow-lg">{error}</div>
-        )}
+        {error && <div className="alert alert-error mt-4 shadow-lg">{error}</div>}
       </div>
     </div>
   );
