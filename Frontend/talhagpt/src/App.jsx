@@ -7,8 +7,8 @@ function App() {
   const [models, setModels] = useState([]);
   const [roles, setRoles] = useState([]);
   const [characters, setCharacters] = useState([]);
-  const [selectedModel, setSelectedModel] = useState("");
-  const [selectedRole, setSelectedRole] = useState("");
+  const [selectedModel, setSelectedModel] = useState("llama3-8b-8192");
+  const [selectedRole, setSelectedRole] = useState("user");
   const [selectedCharacter, setSelectedCharacter] = useState("");
   const [prompt, setPrompt] = useState("");
   const [response, setResponse] = useState("");
@@ -22,17 +22,9 @@ function App() {
   const chatEndRef = useRef(null);
 
   useEffect(() => {
-    axios.get(`${API_BASE_URL}/get_model`)
-      .then((res) => setModels(res?.data?.models))
-      .catch((err) => console.error("Error getting models", err));
-
-    axios.get(`${API_BASE_URL}/get_role`)
-      .then((res) => setRoles(res?.data?.Roles))
-      .catch((err) => console.error("Error getting roles", err));
-
-    axios.get(`${API_BASE_URL}/characters`)
-      .then((res) => setCharacters(res?.data?.characters))
-      .catch((err) => console.error("Error getting characters", err));
+    axios.get(`${API_BASE_URL}/get_model`).then((res) => setModels(res?.data?.models)).catch(console.error);
+    axios.get(`${API_BASE_URL}/get_role`).then((res) => setRoles(res?.data?.Roles)).catch(console.error);
+    axios.get(`${API_BASE_URL}/characters`).then((res) => setCharacters(res?.data?.characters)).catch(console.error);
   }, []);
 
   useEffect(() => {
@@ -68,14 +60,9 @@ function App() {
         setChatHistory((prev) => [...prev, { user: prompt, bot: res.data.response }]);
       } else {
         const chainSteps = {};
-
         chainKeys.forEach((key) => {
           chains[key].forEach((item) => {
-            const stepName = key;
-            chainSteps[stepName] = {
-              role: item.role,
-              prompt: item.prompt,
-            };
+            chainSteps[key] = { role: item.role, prompt: item.prompt };
           });
         });
 
@@ -93,7 +80,7 @@ function App() {
         setChatHistory((prev) => [...prev, { user: prompt, bot: res.data.response }]);
       }
 
-      setPrompt(""); // clear after submit
+      setPrompt("");
     } catch (err) {
       console.error("API error:", err);
       setError("Failed to fetch response");
@@ -111,10 +98,7 @@ function App() {
       setError("Chain name already exists.");
       return;
     }
-    setChains({
-      ...chains,
-      [newChainName]: [{ prompt: "", role: "" }],
-    });
+    setChains({ ...chains, [newChainName]: [{ prompt: "", role: "" }] });
     setSelectedChain(newChainName);
     setNewChainName("");
     setError("");
@@ -173,35 +157,37 @@ function App() {
                   setChains(newChains);
                 }}
               />
-              <button className="text-red-400 hover:text-red-600" onClick={() => removeChain(chainName)}>✕</button>
+              <button className="text-red-400 hover:text-red-600" onClick={() => removeChain(chainName)}>
+                ✕
+              </button>
             </div>
             <div className="flex flex-wrap gap-1 mt-2">
               {items.map((item, idx) => (
-                <div key={idx} className="bg-gray-700 text-white rounded-full px-2 py-1 flex items-center gap-1 hover:bg-gray-600">
+                <div
+                  key={idx}
+                  className="bg-gray-700 text-white rounded-full px-2 py-1 flex items-center gap-1 hover:bg-gray-600"
+                >
                   <select
                     className="select select-xs bg-transparent text-xs text-white border-none"
                     value={item.role}
-                    onChange={(e) =>
-                      updateChainItem(chainName, idx, "role", e.target.value)
-                    }
+                    onChange={(e) => updateChainItem(chainName, idx, "role", e.target.value)}
                   >
-                    <option disabled value="">Role</option>
+                    <option disabled value="">
+                      Role
+                    </option>
                     {roles.map((r) => (
-                      <option key={r} value={r}>{r}</option>
+                      <option key={r} value={r}>
+                        {r}
+                      </option>
                     ))}
                   </select>
                   <input
                     className="bg-transparent border-none outline-none w-28 text-xs"
                     value={item.prompt}
-                    onChange={(e) =>
-                      updateChainItem(chainName, idx, "prompt", e.target.value)
-                    }
+                    onChange={(e) => updateChainItem(chainName, idx, "prompt", e.target.value)}
                     placeholder="Prompt"
                   />
-                  <button
-                    className="ml-1 text-red-300 hover:text-red-500"
-                    onClick={() => removeChainItem(chainName, idx)}
-                  >
+                  <button className="ml-1 text-red-300 hover:text-red-500" onClick={() => removeChainItem(chainName, idx)}>
                     ×
                   </button>
                 </div>
@@ -215,22 +201,18 @@ function App() {
         {chatHistory.map((chat, index) => (
           <div key={index}>
             <div className="chat chat-end">
-              <div className="chat-bubble bg-base-200 text-black text-sm max-w-xl">
-                {chat.user}
-              </div>
+              <div className="chat-bubble bg-base-200 text-black text-sm max-w-xl">{chat.user}</div>
             </div>
             <div className="chat chat-start">
-              <div className="chat-bubble bg-primary text-white text-sm max-w-xl">
-                {chat.bot}
-              </div>
+              <div className="chat-bubble bg-primary text-white text-sm max-w-xl">{chat.bot}</div>
             </div>
           </div>
         ))}
         <div ref={chatEndRef} />
       </div>
 
-      <div className="mt-4">
-        <div className="flex items-end gap-2">
+      <div className="mt-4 space-y-2">
+        <div className="flex flex-col md:flex-row items-stretch md:items-end gap-2">
           <input
             type="text"
             placeholder="Type your message..."
@@ -238,61 +220,56 @@ function App() {
             value={prompt}
             onChange={(e) => setPrompt(e.target.value)}
           />
-          <div className="dropdown dropdown-top dropdown-end">
-            <label tabIndex={0} className="btn btn-outline">⚙️</label>
-            <ul tabIndex={0} className="dropdown-content menu p-4 shadow-lg bg-white text-black rounded-box w-72 space-y-4">
-              <li>
-                <label className="text-xs font-bold px-2">Model</label>
-                <select
-                  className="select select-bordered w-full"
-                  value={selectedModel}
-                  onChange={(e) => setSelectedModel(e.target.value)}
-                >
-                  <option disabled value="">Select Model</option>
-                  {Array.isArray(models) &&
-                    models.map((v, i) => (
-                      <option key={i} value={v}>{v}</option>
-                    ))}
-                </select>
-              </li>
-              <li>
-                <label className="text-xs font-bold px-2">Character</label>
-                <select
-                  disabled={Object.keys(chains).length > 0}
-                  className="select select-bordered w-full"
-                  value={selectedCharacter}
-                  onChange={(e) => setSelectedCharacter(e.target.value)}
-                >
-                  <option disabled value="">Select Character</option>
-                  {characters.map((c) => (
-                    <option key={c}>{c}</option>
-                  ))}
-                </select>
-              </li>
-              <li>
-                <label className="text-xs font-bold px-2">Role</label>
-                <select
-                  className="select select-bordered w-full"
-                  value={selectedRole}
-                  onChange={(e) => setSelectedRole(e.target.value)}
-                >
-                  <option disabled value="">Select Role</option>
-                  {roles.map((r) => (
-                    <option key={r}>{r}</option>
-                  ))}
-                </select>
-              </li>
-            </ul>
+          <div className="flex gap-2">
+            <select
+              className="select select-bordered w-full text-black"
+              value={selectedModel}
+              onChange={(e) => setSelectedModel(e.target.value)}
+            >
+              <option disabled value="">
+                Model
+              </option>
+              {models.map((v, i) => (
+                <option key={i} value={v}>
+                  {v}
+                </option>
+              ))}
+            </select>
+            <select
+              className="select select-bordered w-full text-black"
+              value={selectedCharacter}
+              disabled={Object.keys(chains).length > 0}
+              onChange={(e) => setSelectedCharacter(e.target.value)}
+            >
+              <option disabled value="">
+                Character
+              </option>
+              {characters.map((c) => (
+                <option key={c}>{c}</option>
+              ))}
+            </select>
+            <select
+              className="select select-bordered w-ful text-black"
+              value={selectedRole}
+              onChange={(e) => setSelectedRole(e.target.value)}
+            >
+              <option disabled value="">
+                Role
+              </option>
+              {roles.map((r) => (
+                <option key={r}>{r}</option>
+              ))}
+            </select>
+            <button
+              className="btn btn-primary"
+              onClick={handleSubmit}
+              disabled={loading}
+            >
+              {loading ? <span className="loading loading-spinner"></span> : "Send"}
+            </button>
           </div>
-          <button className="btn btn-primary btn-lg" onClick={handleSubmit} disabled={loading}>
-            {loading ? (
-              <span className="loading loading-spinner"></span>
-            ) : (
-              "Send"
-            )}
-          </button>
         </div>
-        {error && <div className="alert alert-error mt-4 shadow-lg">{error}</div>}
+        {error && <div className="alert alert-error shadow-lg">{error}</div>}
       </div>
     </div>
   );
