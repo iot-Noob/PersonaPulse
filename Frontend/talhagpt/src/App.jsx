@@ -18,6 +18,7 @@ function App() {
   const [selectedChain, setSelectedChain] = useState(null);
   const [newChainName, setNewChainName] = useState("");
   const [chatHistory, setChatHistory] = useState([]);
+  const [temperature, setTemperature] = useState(0.3);
 
   const chatEndRef = useRef(null);
 
@@ -52,7 +53,7 @@ function App() {
               role: selectedRole,
               model: selectedModel,
               character: selectedCharacter || null,
-              temperature: 0.3,
+              temperature,
             },
           }
         );
@@ -61,9 +62,10 @@ function App() {
       } else {
         const chainSteps = {};
         chainKeys.forEach((key) => {
-          chains[key].forEach((item) => {
-            chainSteps[key] = { role: item.role, prompt: item.prompt };
-          });
+          chainSteps[key] = chains[key].map((item) => ({
+            role: item.role,
+            prompt: item.prompt
+          }));
         });
 
         const payload = {
@@ -168,7 +170,7 @@ function App() {
                   className="bg-gray-700 text-white rounded-full px-2 py-1 flex items-center gap-1 hover:bg-gray-600"
                 >
                   <select
-                    className="select select-xs bg-transparent text-xs text-white border-none"
+                    className="select select-xs bg-gray-800/80 text-xs text-white border-none"
                     value={item.role}
                     onChange={(e) => updateChainItem(chainName, idx, "role", e.target.value)}
                   >
@@ -176,7 +178,7 @@ function App() {
                       Role
                     </option>
                     {roles.map((r) => (
-                      <option key={r} value={r}>
+                      <option key={r} value={r} className="bg-gray-800">
                         {r}
                       </option>
                     ))}
@@ -211,65 +213,78 @@ function App() {
         <div ref={chatEndRef} />
       </div>
 
-      <div className="mt-4 space-y-2">
-        <div className="flex flex-col md:flex-row items-stretch md:items-end gap-2">
+      <div className="mt-4">
+        <div className="flex flex-wrap gap-2 bg-gray-800/50 p-4 rounded-2xl items-end">
           <input
             type="text"
             placeholder="Type your message..."
-            className="input input-lg input-bordered flex-1 text-black"
+            className="input input-lg input-bordered flex-1 bg-gray-800/80 text-white"
             value={prompt}
             onChange={(e) => setPrompt(e.target.value)}
           />
-          <div className="flex gap-2">
-            <select
-              className="select select-bordered w-full text-black"
-              value={selectedModel}
-              onChange={(e) => setSelectedModel(e.target.value)}
-            >
-              <option disabled value="">
-                Model
+          <select
+            className="select select-bordered bg-gray-800/80 text-white"
+            value={selectedModel}
+            onChange={(e) => setSelectedModel(e.target.value)}
+          >
+            <option disabled value="">
+              Model
+            </option>
+            {models.map((v, i) => (
+              <option key={i} value={v} className="bg-gray-800">
+                {v}
               </option>
-              {models.map((v, i) => (
-                <option key={i} value={v}>
-                  {v}
-                </option>
-              ))}
-            </select>
-            <select
-              className="select select-bordered w-full text-black"
-              value={selectedCharacter}
-              disabled={Object.keys(chains).length > 0}
-              onChange={(e) => setSelectedCharacter(e.target.value)}
-            >
-              <option disabled value="">
-                Character
+            ))}
+          </select>
+          <select
+            className="select select-bordered bg-gray-800/80 text-white"
+            value={selectedCharacter}
+            disabled={Object.keys(chains).length > 0}
+            onChange={(e) => setSelectedCharacter(e.target.value)}
+          >
+            <option disabled value="">
+              Character
+            </option>
+            {characters.map((c) => (
+              <option key={c} className="bg-gray-800">
+                {c}
               </option>
-              {characters.map((c) => (
-                <option key={c}>{c}</option>
-              ))}
-            </select>
-            <select
-              className="select select-bordered w-ful text-black"
-              value={selectedRole}
-              onChange={(e) => setSelectedRole(e.target.value)}
-            >
-              <option disabled value="">
-                Role
+            ))}
+          </select>
+          <select
+            className="select select-bordered bg-gray-800/80 text-white"
+            value={selectedRole}
+            onChange={(e) => setSelectedRole(e.target.value)}
+          >
+            <option disabled value="">
+              Role
+            </option>
+            {roles.map((r) => (
+              <option key={r} className="bg-gray-800">
+                {r}
               </option>
-              {roles.map((r) => (
-                <option key={r}>{r}</option>
-              ))}
-            </select>
-            <button
-              className="btn btn-primary"
-              onClick={handleSubmit}
-              disabled={loading}
-            >
-              {loading ? <span className="loading loading-spinner"></span> : "Send"}
-            </button>
-          </div>
+            ))}
+          </select>
+          <input
+            type="number"
+            step="0.1"
+            min="0.1"
+            max="1"
+            className="input input-bordered w-28 bg-gray-800/80 text-white"
+            value={temperature}
+            onChange={(e) => setTemperature(parseFloat(e.target.value))}
+            placeholder="Temp (0.1-1)"
+            title="Set temperature (0.1–1.0)"
+          />
+          <button
+            className="btn btn-primary"
+            onClick={handleSubmit}
+            disabled={loading}
+          >
+            {loading ? <span className="loading loading-spinner"></span> : "Send"}
+          </button>
         </div>
-        {error && <div className="alert alert-error shadow-lg">{error}</div>}
+        {error && <div className="alert alert-error shadow-lg mt-2">{error}</div>}
       </div>
     </div>
   );
