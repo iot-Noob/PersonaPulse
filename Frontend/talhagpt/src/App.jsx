@@ -23,9 +23,18 @@ function App() {
   const chatEndRef = useRef(null);
 
   useEffect(() => {
-    axios.get(`${API_BASE_URL}/get_model`).then((res) => setModels(res?.data?.models)).catch(console.error);
-    axios.get(`${API_BASE_URL}/get_role`).then((res) => setRoles(res?.data?.Roles)).catch(console.error);
-    axios.get(`${API_BASE_URL}/characters`).then((res) => setCharacters(res?.data?.characters)).catch(console.error);
+    axios
+      .get(`${API_BASE_URL}/get_model`)
+      .then((res) => setModels(res?.data?.models))
+      .catch(console.error);
+    axios
+      .get(`${API_BASE_URL}/get_role`)
+      .then((res) => setRoles(res?.data?.Roles))
+      .catch(console.error);
+    axios
+      .get(`${API_BASE_URL}/characters`)
+      .then((res) => setCharacters(res?.data?.characters))
+      .catch(console.error);
   }, []);
 
   useEffect(() => {
@@ -58,13 +67,16 @@ function App() {
           }
         );
         setResponse(res.data.response);
-        setChatHistory((prev) => [...prev, { user: prompt, bot: res.data.response }]);
+        setChatHistory((prev) => [
+          ...prev,
+          { user: prompt, bot: res.data.response },
+        ]);
       } else {
         const chainPayloads = chainKeys.map((key) => {
           const chainData = chains[key];
           const chainObj = {};
           chainData.items.forEach((item, idx) => {
-            chainObj[`step${idx + 1}`] = {
+            chainObj[key] = {
               role: item.role,
               prompt: item.prompt,
             };
@@ -73,22 +85,31 @@ function App() {
         });
 
         const promises = chainPayloads.map(({ data, temp }) =>
-          axios.post(`${API_BASE_URL}/chain_response`, {
-            model: selectedModel,
-            system: {
-              role: selectedRole,
-              prompt,
+          axios.post(
+            `${API_BASE_URL}/chain_response`,
+            {
+              model: selectedModel,
+              system: {
+                role: selectedRole,
+                prompt,
+              },
+              chain: [data],
             },
-            chain: [data],
-          }, {
-            params: { temperature: temp },
-          })
+            {
+              params: { temperature: temp },
+            }
+          )
         );
 
         const results = await Promise.all(promises);
-        const combinedResponse = results.map((res) => res.data.response).join("\n---\n");
+        const combinedResponse = results
+          .map((res) => res.data.response)
+          .join("\n---\n");
         setResponse(combinedResponse);
-        setChatHistory((prev) => [...prev, { user: prompt, bot: combinedResponse }]);
+        setChatHistory((prev) => [
+          ...prev,
+          { user: prompt, bot: combinedResponse },
+        ]);
       }
 
       setPrompt("");
@@ -109,7 +130,10 @@ function App() {
       setError("Chain name already exists.");
       return;
     }
-    setChains({ ...chains, [newChainName]: { temperature: 0.3, items: [{ prompt: "", role: "" }] } });
+    setChains({
+      ...chains,
+      [newChainName]: { temperature: 0.3, items: [{ prompt: "", role: "" }] },
+    });
     setSelectedChain(newChainName);
     setNewChainName("");
     setError("");
@@ -118,13 +142,19 @@ function App() {
   const updateChainItem = (chainName, index, field, value) => {
     const updatedItems = [...chains[chainName].items];
     updatedItems[index][field] = value;
-    setChains({ ...chains, [chainName]: { ...chains[chainName], items: updatedItems } });
+    setChains({
+      ...chains,
+      [chainName]: { ...chains[chainName], items: updatedItems },
+    });
   };
 
   const removeChainItem = (chainName, index) => {
     const updatedItems = [...chains[chainName].items];
     updatedItems.splice(index, 1);
-    setChains({ ...chains, [chainName]: { ...chains[chainName], items: updatedItems } });
+    setChains({
+      ...chains,
+      [chainName]: { ...chains[chainName], items: updatedItems },
+    });
   };
 
   const removeChain = (chainName) => {
@@ -144,7 +174,9 @@ function App() {
           value={newChainName}
           onChange={(e) => setNewChainName(e.target.value)}
         />
-        <button className="btn btn-sm btn-accent" onClick={addNewChain}>➕ Add Chain</button>
+        <button className="btn btn-sm btn-accent" onClick={addNewChain}>
+          ➕ Add Chain
+        </button>
       </div>
 
       <div className="flex flex-wrap gap-2 mb-4">
@@ -152,7 +184,10 @@ function App() {
           const items = chainData.items;
           const temp = chainData.temperature;
           return (
-            <div key={chainName} className="flex flex-col bg-slate-800 rounded-xl p-2 max-w-sm text-xs shadow-md">
+            <div
+              key={chainName}
+              className="flex flex-col bg-slate-800 rounded-xl p-2 max-w-sm text-xs shadow-md"
+            >
               <div className="flex justify-between items-center">
                 <input
                   className="bg-transparent font-semibold truncate max-w-[200px] outline-none text-white text-sm"
@@ -169,7 +204,12 @@ function App() {
                     setChains(newChains);
                   }}
                 />
-                <button className="text-red-400 hover:text-red-600" onClick={() => removeChain(chainName)}>✕</button>
+                <button
+                  className="text-red-400 hover:text-red-600"
+                  onClick={() => removeChain(chainName)}
+                >
+                  ✕
+                </button>
               </div>
               <input
                 type="number"
@@ -190,24 +230,43 @@ function App() {
               />
               <div className="flex flex-wrap gap-1 mt-2">
                 {items.map((item, idx) => (
-                  <div key={idx} className="bg-gray-700 text-white rounded-full px-2 py-1 flex items-center gap-1 hover:bg-gray-600">
+                  <div
+                    key={idx}
+                    className="bg-gray-700 text-white rounded-full px-2 py-1 flex items-center gap-1 hover:bg-gray-600"
+                  >
                     <select
                       className="select select-xs bg-gray-800/80 text-xs text-white border-none"
                       value={item.role}
-                      onChange={(e) => updateChainItem(chainName, idx, "role", e.target.value)}
+                      onChange={(e) =>
+                        updateChainItem(chainName, idx, "role", e.target.value)
+                      }
                     >
-                      <option disabled value="">Role</option>
+                      <option disabled value="">
+                        Role
+                      </option>
                       {roles.map((r) => (
-                        <option key={r} value={r} className="bg-gray-800">{r}</option>
+                        <option key={r} value={r} className="bg-gray-800">
+                          {r}
+                        </option>
                       ))}
                     </select>
                     <input
                       className="bg-transparent border-none outline-none w-28 text-xs"
                       value={item.prompt}
-                      onChange={(e) => updateChainItem(chainName, idx, "prompt", e.target.value)}
+                      onChange={(e) =>
+                        updateChainItem(
+                          chainName,
+                          idx,
+                          "prompt",
+                          e.target.value
+                        )
+                      }
                       placeholder="Prompt"
                     />
-                    <button className="ml-1 text-red-300 hover:text-red-500" onClick={() => removeChainItem(chainName, idx)}>
+                    <button
+                      className="ml-1 text-red-300 hover:text-red-500"
+                      onClick={() => removeChainItem(chainName, idx)}
+                    >
                       ×
                     </button>
                   </div>
@@ -222,10 +281,14 @@ function App() {
         {chatHistory.map((chat, index) => (
           <div key={index}>
             <div className="chat chat-end">
-              <div className="chat-bubble bg-base-200 text-black text-sm max-w-xl">{chat.user}</div>
+              <div className="chat-bubble bg-base-200 text-black text-sm max-w-xl">
+                {chat.user}
+              </div>
             </div>
             <div className="chat chat-start">
-              <div className="chat-bubble bg-primary text-white text-sm max-w-xl">{chat.bot}</div>
+              <div className="chat-bubble bg-primary text-white text-sm max-w-xl">
+                {chat.bot}
+              </div>
             </div>
           </div>
         ))}
@@ -246,9 +309,13 @@ function App() {
             value={selectedModel}
             onChange={(e) => setSelectedModel(e.target.value)}
           >
-            <option disabled value="">Model</option>
+            <option disabled value="">
+              Model
+            </option>
             {models.map((v, i) => (
-              <option key={i} value={v} className="bg-gray-800">{v}</option>
+              <option key={i} value={v} className="bg-gray-800">
+                {v}
+              </option>
             ))}
           </select>
           <select
@@ -257,9 +324,13 @@ function App() {
             disabled={Object.keys(chains).length > 0}
             onChange={(e) => setSelectedCharacter(e.target.value)}
           >
-            <option disabled value="">Character</option>
+            <option disabled value="">
+              Character
+            </option>
             {characters.map((c) => (
-              <option key={c} className="bg-gray-800">{c}</option>
+              <option key={c} className="bg-gray-800">
+                {c}
+              </option>
             ))}
           </select>
           <select
@@ -267,9 +338,13 @@ function App() {
             value={selectedRole}
             onChange={(e) => setSelectedRole(e.target.value)}
           >
-            <option disabled value="">Role</option>
+            <option disabled value="">
+              Role
+            </option>
             {roles.map((r) => (
-              <option key={r} className="bg-gray-800">{r}</option>
+              <option key={r} className="bg-gray-800">
+                {r}
+              </option>
             ))}
           </select>
           <input
@@ -283,11 +358,21 @@ function App() {
             placeholder="Temp (0.1-1)"
             title="Set temperature (0.1–1.0)"
           />
-          <button className="btn btn-primary" onClick={handleSubmit} disabled={loading}>
-            {loading ? <span className="loading loading-spinner"></span> : "Send"}
+          <button
+            className="btn btn-primary"
+            onClick={handleSubmit}
+            disabled={loading}
+          >
+            {loading ? (
+              <span className="loading loading-spinner"></span>
+            ) : (
+              "Send"
+            )}
           </button>
         </div>
-        {error && <div className="alert alert-error shadow-lg mt-2">{error}</div>}
+        {error && (
+          <div className="alert alert-error shadow-lg mt-2">{error}</div>
+        )}
       </div>
     </div>
   );
