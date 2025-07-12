@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useRef } from "react";
 import axios from "axios";
+import { TypeAnimation } from 'react-type-animation';
 
 const API_BASE_URL = import.meta.env.VITE_API_ENDPOINT;
 
@@ -301,11 +302,22 @@ const handleSubmit = async () => {
                 {chat.user}
               </div>
             </div>
-            <div className="chat chat-start">
+            {/* <div className="chat chat-start">
               <div className="chat-bubble bg-primary text-white text-sm max-w-xl">
                 {chat.bot}
               </div>
-            </div>
+            </div> */}
+            <div className="chat chat-start">
+  <div className="chat-bubble bg-primary text-white text-sm max-w-xl">
+    <TypeAnimation
+      sequence={[chat.bot]}
+      speed={90}
+      wrapper="span"
+      cursor={true}
+    />
+  </div>
+</div>
+
           </div>
         ))}
         <div ref={chatEndRef} />
