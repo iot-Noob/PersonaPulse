@@ -4,7 +4,7 @@ from tkinter import NO
 from token import OP
 from Models.gpt_mod import OpenAIModel
 from fastapi import APIRouter, HTTPException
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse,StreamingResponse
 from Models.main_model import ChainRequest,RoleEnum,Prompt_Input
 from Models.dyn_enum import get_character_enum
 from openai import OpenAI
