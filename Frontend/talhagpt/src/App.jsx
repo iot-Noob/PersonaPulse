@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useRef } from "react";
 import axios from "axios";
-import { TypeAnimation } from 'react-type-animation';
+import { TypeAnimation } from "react-type-animation";
 
 const API_BASE_URL = import.meta.env.VITE_API_ENDPOINT;
 
@@ -45,99 +45,98 @@ function App() {
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [chatHistory]);
-const handleSubmit = async () => {
-  if (!selectedModel || !selectedRole) {
-    setError("Model and Role are required.");
-    return;
-  }
+  const handleSubmit = async () => {
+    if (!selectedModel || !selectedRole) {
+      setError("Model and Role are required.");
+      return;
+    }
 
-  setLoading(true);
-  setError("");
+    setLoading(true);
+    setError("");
 
-  try {
-    const chainKeys = Object.keys(chains);
+    try {
+      const chainKeys = Object.keys(chains);
 
-    // Build prompt from chat history
-    const historyAsPrompt =
-      chatHistory
-        .map(({ user, bot }) => `user: ${user}\nassistant: ${bot}`)
-        .join("\n") + `\nuser: ${prompt}`;
-
-    if (chainKeys.length === 0) {
-      const res = await axios.post(
-        `${API_BASE_URL}/simple_prompt`,
-        { prompt: historyAsPrompt },
-        {
-          params: {
-            role: selectedRole,
-            model: selectedModel,
-            character: selectedCharacter || null,
-            temperature,
-          },
-        }
-      );
-
-      setResponse(res.data.response);
-      setChatHistory((prev) => [
-        ...prev,
-        { user: prompt, bot: res.data.response },
-      ]);
-    } else {
-      const chainPayloads = chainKeys.map((key) => {
-        const chainData = chains[key];
-        const chainObj = {};
-        chainData.items.forEach((item) => {
-          chainObj[key] = {
-            role: item.role,
-            prompt: item.prompt,
-          };
-        });
-        return { data: chainObj, temp: chainData.temperature };
-      });
-
-      const historyPrompt = 
+      // Build prompt from chat history
+      const historyAsPrompt =
         chatHistory
           .map(({ user, bot }) => `user: ${user}\nassistant: ${bot}`)
           .join("\n") + `\nuser: ${prompt}`;
 
-      const promises = chainPayloads.map(({ data, temp }) =>
-        axios.post(
-          `${API_BASE_URL}/chain_response`,
+      if (chainKeys.length === 0) {
+        const res = await axios.post(
+          `${API_BASE_URL}/simple_prompt`,
+          { prompt: historyAsPrompt },
           {
-            model: selectedModel,
-            system: {
+            params: {
               role: selectedRole,
-              prompt: historyPrompt, // ✅ history injected
+              model: selectedModel,
+              character: selectedCharacter || null,
+              temperature,
             },
-            chain: [data],
-          },
-          {
-            params: { temperature: temp },
           }
-        )
-      );
+        );
 
-      const results = await Promise.all(promises);
-      const combinedResponse = results
-        .map((res) => res.data.response)
-        .join("\n---\n");
+        setResponse(res.data.response);
+        setChatHistory((prev) => [
+          ...prev,
+          { user: prompt, bot: res.data.response },
+        ]);
+      } else {
+        const chainPayloads = chainKeys.map((key) => {
+          const chainData = chains[key];
+          const chainObj = {};
+          chainData.items.forEach((item) => {
+            chainObj[key] = {
+              role: item.role,
+              prompt: item.prompt,
+            };
+          });
+          return { data: chainObj, temp: chainData.temperature };
+        });
 
-      setResponse(combinedResponse);
-      setChatHistory((prev) => [
-        ...prev,
-        { user: prompt, bot: combinedResponse },
-      ]);
+        const historyPrompt =
+          chatHistory
+            .map(({ user, bot }) => `user: ${user}\nassistant: ${bot}`)
+            .join("\n") + `\nuser: ${prompt}`;
+
+        const promises = chainPayloads.map(({ data, temp }) =>
+          axios.post(
+            `${API_BASE_URL}/chain_response`,
+            {
+              model: selectedModel,
+              system: {
+                role: selectedRole,
+                prompt: historyPrompt, // ✅ history injected
+              },
+              chain: [data],
+            },
+            {
+              params: { temperature: temp },
+            }
+          )
+        );
+
+        const results = await Promise.all(promises);
+        const combinedResponse = results
+          .map((res) => res.data.response)
+          .join("\n---\n");
+
+        setResponse(combinedResponse);
+        setChatHistory((prev) => [
+          ...prev,
+          { user: prompt, bot: combinedResponse },
+        ]);
+      }
+
+      setPrompt("");
+    } catch (err) {
+      console.error("API error:", err);
+      setError("Failed to fetch response");
+    } finally {
+      setLoading(false);
     }
-
-    setPrompt("");
-  } catch (err) {
-    console.error("API error:", err);
-    setError("Failed to fetch response");
-  } finally {
-    setLoading(false);
-  }
-};
-
+  };
 
   const addNewChain = () => {
     // Automatically generate a new unique chain name like "step1", "step2", etc.
@@ -308,16 +307,15 @@ const handleSubmit = async () => {
               </div>
             </div> */}
             <div className="chat chat-start">
-  <div className="chat-bubble bg-primary text-white text-sm max-w-xl">
-    <TypeAnimation
-      sequence={[chat.bot]}
-      speed={90}
-      wrapper="span"
-      cursor={true}
-    />
-  </div>
-</div>
-
+              <div className="chat-bubble bg-primary text-white text-sm max-w-xl">
+                <TypeAnimation
+                  sequence={[chat.bot]}
+                  speed={99}
+                  wrapper="span"
+                  cursor={false}
+                />
+              </div>
+            </div>
           </div>
         ))}
         <div ref={chatEndRef} />
@@ -325,10 +323,9 @@ const handleSubmit = async () => {
 
       <div className="mt-4">
         <div className="flex flex-wrap gap-2 bg-gray-800/50 p-4 rounded-2xl items-end">
-          <input
-            type="text"
+          <textarea
             placeholder="Type your message..."
-            className="input input-lg input-bordered flex-1 bg-gray-800/80 text-white"
+            className="input input-lg input-bordered flex-1 bg-gray-800/80 text-white resize-none"
             value={prompt}
             onChange={(e) => setPrompt(e.target.value)}
           />
@@ -350,9 +347,9 @@ const handleSubmit = async () => {
             className="select select-bordered bg-gray-800/80 text-white"
             value={selectedCharacter}
             disabled={Object.keys(chains).length > 0}
-            onChange={(e) =>{
-               setSelectedCharacter(e.target.value)
-               setChatHistory([])
+            onChange={(e) => {
+              setSelectedCharacter(e.target.value);
+              setChatHistory([]);
             }}
           >
             <option disabled value="">
@@ -368,8 +365,7 @@ const handleSubmit = async () => {
             className="select select-bordered bg-gray-800/80 text-white"
             value={selectedRole}
             onChange={(e) => {
-              setSelectedRole(e.target.value)
-           
+              setSelectedRole(e.target.value);
             }}
           >
             <option disabled value="">

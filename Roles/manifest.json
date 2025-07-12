@@ -21,10 +21,7 @@
       "subname": "Narindar Modi"
     },
    
-    {
-      "file": "nithen_yahu.json",
-      "subname": "Benjimen Nithen Yahu"
-    },
+ 
     {
       "file": "putin.json",
       "subname": "Valadmir Putin"
@@ -32,6 +29,20 @@
      {
       "file": "Dexter.json",
       "subname": "Dexter Morgan"
-    }
+    },
+  {
+    "file":"radhe_bhaiya.json",
+     "subname": "Radhe Bhaiya (Tera naam)"
+  },
+
+    {
+    "file":"mom.json",
+     "subname": "Talha Mom"
+  },
+  
+    {
+    "file":"galib.json",
+     "subname": "Mirza Galib"
+  }
   ]
 }
