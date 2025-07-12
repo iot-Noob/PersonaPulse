@@ -57,15 +57,15 @@ const handleSubmit = async () => {
     const chainKeys = Object.keys(chains);
 
     // Build prompt from chat history
-const historyAsPrompt =
-  chatHistory
-    .map(({ user, bot }) => `user: ${user}\nassistant: ${bot}`)
-    .join("\n") + `\nuser: ${prompt}`;
+    const historyAsPrompt =
+      chatHistory
+        .map(({ user, bot }) => `user: ${user}\nassistant: ${bot}`)
+        .join("\n") + `\nuser: ${prompt}`;
 
     if (chainKeys.length === 0) {
       const res = await axios.post(
         `${API_BASE_URL}/simple_prompt`,
-        { prompt: historyAsPrompt },  
+        { prompt: historyAsPrompt },
         {
           params: {
             role: selectedRole,
@@ -94,6 +94,11 @@ const historyAsPrompt =
         return { data: chainObj, temp: chainData.temperature };
       });
 
+      const historyPrompt = 
+        chatHistory
+          .map(({ user, bot }) => `user: ${user}\nassistant: ${bot}`)
+          .join("\n") + `\nuser: ${prompt}`;
+
       const promises = chainPayloads.map(({ data, temp }) =>
         axios.post(
           `${API_BASE_URL}/chain_response`,
@@ -101,7 +106,7 @@ const historyAsPrompt =
             model: selectedModel,
             system: {
               role: selectedRole,
-              prompt,
+              prompt: historyPrompt, // ✅ history injected
             },
             chain: [data],
           },
@@ -115,6 +120,7 @@ const historyAsPrompt =
       const combinedResponse = results
         .map((res) => res.data.response)
         .join("\n---\n");
+
       setResponse(combinedResponse);
       setChatHistory((prev) => [
         ...prev,
@@ -130,6 +136,7 @@ const historyAsPrompt =
     setLoading(false);
   }
 };
+
 
   const addNewChain = () => {
     // Automatically generate a new unique chain name like "step1", "step2", etc.
