@@ -39,7 +39,10 @@
     "file":"mom.json",
      "subname": "Talha Mom"
   },
-  
+      {
+    "file":"muna_bjai.json",
+     "subname": "Muna Bhai MBBS"
+  },
     {
     "file":"galib.json",
      "subname": "Mirza Galib"
