@@ -338,7 +338,10 @@ const handleSubmit = async () => {
             className="select select-bordered bg-gray-800/80 text-white"
             value={selectedCharacter}
             disabled={Object.keys(chains).length > 0}
-            onChange={(e) => setSelectedCharacter(e.target.value)}
+            onChange={(e) =>{
+               setSelectedCharacter(e.target.value)
+               setChatHistory([])
+            }}
           >
             <option disabled value="">
               Character
@@ -352,7 +355,10 @@ const handleSubmit = async () => {
           <select
             className="select select-bordered bg-gray-800/80 text-white"
             value={selectedRole}
-            onChange={(e) => setSelectedRole(e.target.value)}
+            onChange={(e) => {
+              setSelectedRole(e.target.value)
+              setChatHistory([])
+            }}
           >
             <option disabled value="">
               Role
