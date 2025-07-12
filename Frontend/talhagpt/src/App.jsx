@@ -23,6 +23,7 @@ function App() {
   const chatEndRef = useRef(null);
 
   useEffect(() => {
+    try{
     axios
       .get(`${API_BASE_URL}/get_model`)
       .then((res) => setModels(res?.data?.models))
@@ -35,6 +36,10 @@ function App() {
       .get(`${API_BASE_URL}/characters`)
       .then((res) => setCharacters(res?.data?.characters))
       .catch(console.error);
+    }catch(err){
+      console.error(`Error occur fetch data due to `.err)
+    }
+
   }, []);
 
   useEffect(() => {
@@ -46,7 +51,8 @@ function App() {
       setError("Model and Role are required.");
       return;
     }
-
+ 
+    
     setLoading(true);
     setError("");
 
@@ -54,6 +60,8 @@ function App() {
       const chainKeys = Object.keys(chains);
 
       if (chainKeys.length === 0) {
+  
+
         const res = await axios.post(
           `${API_BASE_URL}/simple_prompt`,
           { prompt },
@@ -121,23 +129,22 @@ function App() {
     }
   };
 
-  const addNewChain = () => {
-    if (!newChainName.trim()) {
-      setError("Chain name cannot be empty.");
-      return;
-    }
-    if (chains[newChainName]) {
-      setError("Chain name already exists.");
-      return;
-    }
-    setChains({
-      ...chains,
-      [newChainName]: { temperature: 0.3, items: [{ prompt: "", role: "" }] },
-    });
-    setSelectedChain(newChainName);
-    setNewChainName("");
-    setError("");
-  };
+const addNewChain = () => {
+  // Automatically generate a new unique chain name like "step1", "step2", etc.
+  let idx = 1;
+  let cname;
+  do {
+    cname = `step${idx++}`;
+  } while (chains[cname]);
+
+  // No need to use setNewChainName here unless you need it somewhere else
+  setChains({
+    ...chains,
+    [cname]: { temperature: 0.3, items: [{ prompt: "", role: "user" }] },
+  });
+  setSelectedChain(cname);
+  setError("");
+};
 
   const updateChainItem = (chainName, index, field, value) => {
     const updatedItems = [...chains[chainName].items];
@@ -167,13 +174,13 @@ function App() {
   return (
     <div className="flex flex-col h-screen bg-gradient-to-br from-gray-950 to-gray-900 text-white p-4 font-sans">
       <div className="mb-3 flex gap-2 items-center">
-        <input
+        {/* <input
           type="text"
           placeholder="New chain name"
           className="input input-sm input-bordered text-black"
           value={newChainName}
           onChange={(e) => setNewChainName(e.target.value)}
-        />
+        /> */}
         <button className="btn btn-sm btn-accent" onClick={addNewChain}>
           ➕ Add Chain
         </button>
