@@ -32,7 +32,9 @@ async def lifespan(app: APIRouter):
     
     client = OpenAI(
         api_key=apikey,
-        base_url="https://api.groq.com/openai/v1" 
+        base_url="https://api.groq.com/openai/v1",
+        timeout=10,
+        
     )
 
     yield
@@ -81,7 +83,7 @@ async def simple_prompt(role: RoleEnum, model: OpenAIModel, prompt: Prompt_Input
                                 model=model.value,
                                 messages=msg2,
                                 temperature=temperature,
-                                
+                               
                             )
                         else:
                             raise HTTPException(404,"Path invalid")
