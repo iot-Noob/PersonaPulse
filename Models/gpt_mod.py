@@ -8,3 +8,5 @@ class OpenAIModel(str, Enum):
     ds_r1= "deepseek-r1-distill-llama-70b"
     google_gama="gemma2-9b-it"
     meta_guard="meta-llama/llama-prompt-guard-2-86m"
+    lama4="meta-llama/llama-4-scout-17b-16e-instruct"
+    mistrial_saba24b="mistral-saba-24b"
