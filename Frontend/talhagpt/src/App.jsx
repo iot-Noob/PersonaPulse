@@ -23,128 +23,130 @@ function App() {
   const chatEndRef = useRef(null);
 
   useEffect(() => {
-    try{
-    axios
-      .get(`${API_BASE_URL}/get_model`)
-      .then((res) => setModels(res?.data?.models))
-      .catch(console.error);
-    axios
-      .get(`${API_BASE_URL}/get_role`)
-      .then((res) => setRoles(res?.data?.Roles))
-      .catch(console.error);
-    axios
-      .get(`${API_BASE_URL}/characters`)
-      .then((res) => setCharacters(res?.data?.characters))
-      .catch(console.error);
-    }catch(err){
-      console.error(`Error occur fetch data due to `.err)
+    try {
+      axios
+        .get(`${API_BASE_URL}/get_model`)
+        .then((res) => setModels(res?.data?.models))
+        .catch(console.error);
+      axios
+        .get(`${API_BASE_URL}/get_role`)
+        .then((res) => setRoles(res?.data?.Roles))
+        .catch(console.error);
+      axios
+        .get(`${API_BASE_URL}/characters`)
+        .then((res) => setCharacters(res?.data?.characters))
+        .catch(console.error);
+    } catch (err) {
+      console.error(`Error occur fetch data due to `.err);
     }
-
   }, []);
 
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [chatHistory]);
+const handleSubmit = async () => {
+  if (!selectedModel || !selectedRole) {
+    setError("Model and Role are required.");
+    return;
+  }
 
-  const handleSubmit = async () => {
-    if (!selectedModel || !selectedRole) {
-      setError("Model and Role are required.");
-      return;
-    }
- 
-    
-    setLoading(true);
-    setError("");
-
-    try {
-      const chainKeys = Object.keys(chains);
-
-      if (chainKeys.length === 0) {
-  
-
-        const res = await axios.post(
-          `${API_BASE_URL}/simple_prompt`,
-          { prompt },
-          {
-            params: {
-              role: selectedRole,
-              model: selectedModel,
-              character: selectedCharacter || null,
-              temperature,
-            },
-          }
-        );
-        setResponse(res.data.response);
-        setChatHistory((prev) => [
-          ...prev,
-          { user: prompt, bot: res.data.response },
-        ]);
-      } else {
-        const chainPayloads = chainKeys.map((key) => {
-          const chainData = chains[key];
-          const chainObj = {};
-          chainData.items.forEach((item, idx) => {
-            chainObj[key] = {
-              role: item.role,
-              prompt: item.prompt,
-            };
-          });
-          return { data: chainObj, temp: chainData.temperature };
-        });
-
-        const promises = chainPayloads.map(({ data, temp }) =>
-          axios.post(
-            `${API_BASE_URL}/chain_response`,
-            {
-              model: selectedModel,
-              system: {
-                role: selectedRole,
-                prompt,
-              },
-              chain: [data],
-            },
-            {
-              params: { temperature: temp },
-            }
-          )
-        );
-
-        const results = await Promise.all(promises);
-        const combinedResponse = results
-          .map((res) => res.data.response)
-          .join("\n---\n");
-        setResponse(combinedResponse);
-        setChatHistory((prev) => [
-          ...prev,
-          { user: prompt, bot: combinedResponse },
-        ]);
-      }
-
-      setPrompt("");
-    } catch (err) {
-      console.error("API error:", err);
-      setError("Failed to fetch response");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-const addNewChain = () => {
-  // Automatically generate a new unique chain name like "step1", "step2", etc.
-  let idx = 1;
-  let cname;
-  do {
-    cname = `step${idx++}`;
-  } while (chains[cname]);
-
-  // No need to use setNewChainName here unless you need it somewhere else
-  setChains({
-    ...chains,
-    [cname]: { temperature: 0.3, items: [{ prompt: "", role: "user" }] },
-  });
-  setSelectedChain(cname);
+  setLoading(true);
   setError("");
+
+  try {
+    const chainKeys = Object.keys(chains);
+
+    // Build prompt from chat history
+const historyAsPrompt =
+  chatHistory
+    .map(({ user, bot }) => `user: ${user}\nassistant: ${bot}`)
+    .join("\n") + `\nuser: ${prompt}`;
+
+    if (chainKeys.length === 0) {
+      const res = await axios.post(
+        `${API_BASE_URL}/simple_prompt`,
+        { prompt: historyAsPrompt },  
+        {
+          params: {
+            role: selectedRole,
+            model: selectedModel,
+            character: selectedCharacter || null,
+            temperature,
+          },
+        }
+      );
+
+      setResponse(res.data.response);
+      setChatHistory((prev) => [
+        ...prev,
+        { user: prompt, bot: res.data.response },
+      ]);
+    } else {
+      const chainPayloads = chainKeys.map((key) => {
+        const chainData = chains[key];
+        const chainObj = {};
+        chainData.items.forEach((item) => {
+          chainObj[key] = {
+            role: item.role,
+            prompt: item.prompt,
+          };
+        });
+        return { data: chainObj, temp: chainData.temperature };
+      });
+
+      const promises = chainPayloads.map(({ data, temp }) =>
+        axios.post(
+          `${API_BASE_URL}/chain_response`,
+          {
+            model: selectedModel,
+            system: {
+              role: selectedRole,
+              prompt,
+            },
+            chain: [data],
+          },
+          {
+            params: { temperature: temp },
+          }
+        )
+      );
+
+      const results = await Promise.all(promises);
+      const combinedResponse = results
+        .map((res) => res.data.response)
+        .join("\n---\n");
+      setResponse(combinedResponse);
+      setChatHistory((prev) => [
+        ...prev,
+        { user: prompt, bot: combinedResponse },
+      ]);
+    }
+
+    setPrompt("");
+  } catch (err) {
+    console.error("API error:", err);
+    setError("Failed to fetch response");
+  } finally {
+    setLoading(false);
+  }
 };
+
+  const addNewChain = () => {
+    // Automatically generate a new unique chain name like "step1", "step2", etc.
+    let idx = 1;
+    let cname;
+    do {
+      cname = `step${idx++}`;
+    } while (chains[cname]);
+
+    // No need to use setNewChainName here unless you need it somewhere else
+    setChains({
+      ...chains,
+      [cname]: { temperature: 0.3, items: [{ prompt: "", role: "system" }] },
+    });
+    setSelectedChain(cname);
+    setError("");
+  };
 
   const updateChainItem = (chainName, index, field, value) => {
     const updatedItems = [...chains[chainName].items];
