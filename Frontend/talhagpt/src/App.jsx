@@ -357,7 +357,7 @@ const handleSubmit = async () => {
             value={selectedRole}
             onChange={(e) => {
               setSelectedRole(e.target.value)
-              setChatHistory([])
+           
             }}
           >
             <option disabled value="">
