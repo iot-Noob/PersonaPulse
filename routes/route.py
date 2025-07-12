@@ -26,7 +26,11 @@ async def lifespan(app: APIRouter):
     print("STARTUP: Init Groq client")
     apikey = os.getenv("API_KEY")
     global client
-
+    global mainf  
+    if not os.path.exists(manifest_path):
+        raise ValueError("Error cant load manifest file make sure poath and fiename is correct or file exist")
+    with open(manifest_path, 'r', encoding='utf-8') as f:
+        mainf  = json.load(f)
     if not apikey:
         raise ValueError("API key missing")
     
@@ -67,8 +71,6 @@ async def simple_prompt(role: RoleEnum, model: OpenAIModel, prompt: Prompt_Input
                 temperature=temperature,
             )
         else:
-            with open(manifest_path, 'r', encoding='utf-8') as f:
-                mainf:dict = json.load(f)
             for k,v in mainf.items():
                 for va in v:
                     if va["subname"]==character.value:
@@ -100,16 +102,35 @@ async def simple_prompt(role: RoleEnum, model: OpenAIModel, prompt: Prompt_Input
         raise HTTPException(status_code=433, detail=f"Error getting response due to: {e}")
 
 @route.post("/chain_response", description="Get API response from Groq for chained prompts", tags=["Chain Response"])
-async def chain_res(creq: ChainRequest, temperature: float=0.3):
+async def chain_res(creq: ChainRequest, temperature: float = 0.3, character: Optional[str] = None):
     try:
         if not (0.0 <= temperature <= 0.8):
             raise HTTPException(status_code=400, detail="Temperature must be between 0.0 and 0.8")
 
-        messages = [{
+        messages = []
+
+        # Step 1: Load persona if character is provided
+        if character:
+            found = False
+            for k, v in mainf.items():
+                for val in v:
+                    if val["subname"] == character:
+                        bp = os.path.join(roles_dir, val["file"])
+                        if os.path.exists(bp):
+                            with open(bp, 'r', encoding='utf-8') as f:
+                                persona = json.load(f)
+                            messages.append(persona)
+                            found = True
+            if not found:
+                raise HTTPException(status_code=404, detail="Character not found in manifest")
+
+        # Step 2: Add system message
+        messages.append({
             "role": creq.system.role,
             "content": creq.system.prompt
-        }]
+        })
 
+        # Step 3: Append chain steps (always!)
         for step in creq.chain:
             for _, step_content in step.items():
                 messages.append({
@@ -117,10 +138,11 @@ async def chain_res(creq: ChainRequest, temperature: float=0.3):
                     "content": step_content.prompt
                 })
 
-        print("Formatted Messages:", messages)
+        print("Formatted Messages:", json.dumps(messages, indent=2))
 
+        # Step 4: Send request
         res = client.chat.completions.create(
-            model=creq.model.value,  # example: "llama3-70b-8192"
+            model=creq.model.value,
             messages=messages,
             temperature=temperature
         )
@@ -151,12 +173,10 @@ async def get_character():
     if not os.path.exists(manifest_path):
         raise HTTPException(status_code=404, detail="Manifest.json not found")
 
-    with open(manifest_path, "r", encoding="utf-8") as f:
-        manifest = json.load(f)
 
     result = []
 
-    for v in manifest.values():
+    for v in mainf.values():
         for item in v:
             file = item.get("file")
             subname = item.get("subname")

@@ -45,6 +45,7 @@ function App() {
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [chatHistory]);
+  ///submit button code
   const handleSubmit = async () => {
     if (!selectedModel || !selectedRole) {
       setError("Model and Role are required.");
@@ -105,6 +106,7 @@ function App() {
             `${API_BASE_URL}/chain_response`,
             {
               model: selectedModel,
+               
               system: {
                 role: selectedRole,
                 prompt: historyPrompt, // ✅ history injected
@@ -112,7 +114,7 @@ function App() {
               chain: [data],
             },
             {
-              params: { temperature: temp },
+              params: { temperature: temp ,character: selectedCharacter,},
             }
           )
         );
@@ -346,7 +348,7 @@ function App() {
           <select
             className="select select-bordered bg-gray-800/80 text-white"
             value={selectedCharacter}
-            disabled={Object.keys(chains).length > 0}
+            // disabled={Object.keys(chains).length > 0}
             onChange={(e) => {
               setSelectedCharacter(e.target.value);
               setChatHistory([]);
