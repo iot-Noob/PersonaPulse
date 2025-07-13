@@ -46,6 +46,10 @@
     {
     "file":"galib.json",
      "subname": "Mirza Galib"
+  },
+  {
+    "file":"astrologist.json",
+     "subname": "Asterologist"
   }
   ]
 }
