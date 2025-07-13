@@ -50,6 +50,10 @@
   {
     "file":"astrologist.json",
      "subname": "Asterologist"
+  },
+    {
+    "file":"HR_recruter.json",
+     "subname": "CV Approver"
   }
   ]
 }
