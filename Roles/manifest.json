@@ -54,6 +54,10 @@
     {
     "file":"HR_recruter.json",
      "subname": "CV Approver"
+  },
+  {
+    "file":"electroboom.json",
+     "subname": "Electroboom"
   }
   ]
 }
