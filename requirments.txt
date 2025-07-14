@@ -14,3 +14,8 @@ rich
 sentry-sdk
 toml
 uvicorn
+chromadb
+sentence-transformers
+transformers
+langchain
+sentence-transformers
