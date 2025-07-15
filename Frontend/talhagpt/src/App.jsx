@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useRef } from "react";
 import axios from "axios";
 import { TypeAnimation } from "react-type-animation";
-
+import ChatMarkdownRenderer from "./components/ChatMarkdownRenderer";
 const API_BASE_URL = import.meta.env.VITE_API_ENDPOINT;
 
 function App() {
@@ -167,16 +167,9 @@ function App() {
         <div className="flex-1 overflow-auto space-y-4">
           {chatHistory.map((chat, index) => (
             <div key={index}>
-              <div className="chat chat-end">
-                <div className="chat-bubble bg-base-200 text-black text-sm max-w-xl">
-                  {chat.user}
-                </div>
-              </div>
-              <div className="chat chat-start">
-                <div className="chat-bubble bg-primary text-white text-sm max-w-xl">
-                  <TypeAnimation sequence={[chat.bot]} speed={99} wrapper="span" cursor={false} />
-                </div>
-              </div>
+              <div className="chat-bubble bg-primary text-white text-sm max-w-xl prose max-w-none overflow-x-auto">
+  <ChatMarkdownRenderer content={chat.bot} />
+</div>
             </div>
           ))}
           <div ref={chatEndRef} />
