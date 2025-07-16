@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useRef } from "react";
 import axios from "axios";
 import { TypeAnimation } from "react-type-animation";
-
+import MarkdownMessage from "./components/MarkdownMessage";
 const API_BASE_URL = import.meta.env.VITE_API_ENDPOINT;
 
 function App() {
@@ -22,6 +22,7 @@ function App() {
   const [temperature, setTemperature] = useState(0.3);
 
   const chatEndRef = useRef(null);
+  const systemPrompt = `You are a helpful assistant. Format all your responses using Markdown. Use code blocks for code, headers where appropriate, lists for steps, and preserve line breaks in poems.`;
 
   useEffect(() => {
     try {
@@ -48,12 +49,13 @@ function App() {
 
     try {
       const chainKeys = Object.keys(chains);
-      const historyAsPrompt = chatHistory.map(({ user, bot }) => `user: ${user}\nassistant: ${bot}`).join("\n") + `\nuser: ${prompt}`;
+const historyAsPrompt = chatHistory.map(({ user, bot }) => `user: ${user}\nassistant: ${bot}`).join("\n");
+const finalPrompt = `system: ${systemPrompt}\n${historyAsPrompt}\nuser: ${prompt}`;
 
       if (chainKeys.length === 0) {
         const res = await axios.post(
           `${API_BASE_URL}/simple_prompt`,
-          { prompt: historyAsPrompt },
+          { prompt: finalPrompt },
           {
             params: {
               role: selectedRole,
@@ -80,6 +82,7 @@ function App() {
         });
 
         const historyPrompt = chatHistory.map(({ user, bot }) => `user: ${user}\nassistant: ${bot}`).join("\n") + `\nuser: ${prompt}`;
+        const finalPrompt = `system: ${systemPrompt}\n${historyAsPrompt}\nuser: ${prompt}`;
 
         const promises = chainPayloads.map(({ data, temp }) =>
           axios.post(
@@ -88,7 +91,7 @@ function App() {
               model: selectedModel,
               system: {
                 role: selectedRole,
-                prompt: historyPrompt,
+                prompt: finalPrompt,
               },
               chain: [data],
             },
@@ -174,7 +177,8 @@ function App() {
               </div>
               <div className="chat chat-start">
                 <div className="chat-bubble bg-primary text-white text-sm max-w-xl">
-                  <TypeAnimation sequence={[chat.bot]} speed={99} wrapper="span" cursor={false} />
+                  {/* <TypeAnimation sequence={[chat.bot]} speed={99} wrapper="span" cursor={false} /> */}
+                  <MarkdownMessage content={chat.bot} key={index}/>
                 </div>
               </div>
             </div>
@@ -184,12 +188,18 @@ function App() {
 
         <div className="sticky bottom-0  z-10 py-4">
           <div className="flex flex-wrap gap-2 bg-gray-800/50 p-4 rounded-2xl items-end">
-            <textarea
-              placeholder="Type your message..."
-              className="input input-sm input-bordered flex-1 bg-gray-800/80 text-white resize-none"
-              value={prompt}
-              onChange={(e) => setPrompt(e.target.value)}
-            />
+      <textarea
+  placeholder="Type your message..."
+  rows={1}
+  className="w-full p-3 rounded-xl text-white bg-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary resize-none max-h-40 overflow-y-auto"
+  value={prompt}
+  onChange={(e) => setPrompt(e.target.value)}
+  onInput={(e) => {
+    e.target.style.height = "auto";
+    e.target.style.height = `${e.target.scrollHeight}px`;
+  }}
+/>
+
             <select className="select select-sm bg-gray-800/80 text-white w-28" value={selectedModel} onChange={(e) => setSelectedModel(e.target.value)}>
               <option disabled value="">Model</option>
               {models.map((v, i) => (
