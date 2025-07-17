@@ -22,7 +22,7 @@ function App() {
   const [temperature, setTemperature] = useState(0.3);
 
   const chatEndRef = useRef(null);
-  const systemPrompt = `You are a helpful assistant. Format all your responses using Markdown. Use code blocks for code, headers where appropriate, lists for steps, and preserve line breaks in poems.`;
+  const systemPrompt = `You are a helpful assistant. Format all your responses using Markdown. Use code blocks for code, headers where appropriate, lists for steps, and preserve line breaks in poems. When asked to show a chart, respond with ECharts-compatible JSON option configuration, and clearly label it as ECharts`;
 
   useEffect(() => {
     try {
