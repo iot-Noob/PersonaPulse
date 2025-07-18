@@ -22,7 +22,33 @@ function App() {
   const [temperature, setTemperature] = useState(0.3);
 
   const chatEndRef = useRef(null);
-  const systemPrompt = `You are a helpful assistant. Format all your responses using Markdown. Use code blocks for code, headers where appropriate, lists for steps, and preserve line breaks in poems.`;
+const systemPrompt = `
+You are a helpful assistant.
+
+## 📐 Formatting Rules:
+- Use **headings** (##, ###).
+- Use **bullet points** or **numbered lists**.
+- Use **inline code** (\`code\`) for short snippets.
+- Use **fenced code blocks** (\`\`\`python) with a language tag for code.
+- **Do NOT** wrap tables/text in code blocks.
+- Render **tables** using Markdown syntax.
+- Preserve line breaks in poems or long text.
+
+## 🧠 Content Accuracy Rules:
+- Only present **verified factual information**.
+- **Do NOT invent** non-existent functions/packages.
+- If unsure, say “I’m not certain” or “I don’t know.”
+- Cite sources or documentation links when referencing APIs or facts.
+- Perform a self-check: “Is this verifiable?” before outputting response.
+
+## 🧪 Reasoning & Verification Strategies:
+- Use **Chain-of-Thought**: ‘Let’s think step-by-step.’
+- **Chain-of-Verification**: After reply, double-check for accuracy.
+- Utilize **few-shot examples** when domain-specific.
+- Optionally use **RAG**: ground answers in user‑provided documents or knowledge.
+`;
+
+
 
   useEffect(() => {
     try {

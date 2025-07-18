@@ -4,19 +4,22 @@ import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import rehypeHighlight from "rehype-highlight";
 
-// Use a dark-compatible highlight theme
-import "highlight.js/styles/github-dark-dimmed.css"; 
+// Optional: highlight.js theme for syntax highlighting
+import "highlight.js/styles/github-dark-dimmed.css";
 
 const MarkdownMessage = ({ content }) => {
   return (
     <div className="prose prose-sm prose-invert max-w-none">
       <ReactMarkdown
-        children={content}
         remarkPlugins={[remarkGfm]}
         rehypePlugins={[rehypeHighlight]}
         components={{
-          h1: ({ children }) => <h1 className="text-2xl font-bold">{children}</h1>,
-          h2: ({ children }) => <h2 className="text-xl font-semibold">{children}</h2>,
+          h1: ({ children }) => (
+            <h1 className="text-2xl font-bold">{children}</h1>
+          ),
+          h2: ({ children }) => (
+            <h2 className="text-xl font-semibold">{children}</h2>
+          ),
           p: ({ children }) => <p className="mb-2">{children}</p>,
           li: ({ children }) => <li className="list-disc ml-6">{children}</li>,
           blockquote: ({ children }) => (
@@ -34,21 +37,23 @@ const MarkdownMessage = ({ content }) => {
               {children}
             </a>
           ),
-          code({ inline, className, children }) {
+          code({ inline, className, children, ...props }) {
             return inline ? (
               <code className="bg-base-200 px-1 py-0.5 rounded text-sm">
                 {children}
               </code>
             ) : (
-              <pre className="bg-base-200 text-base-content p-3 rounded overflow-x-auto text-sm">
-                <code className={className}>{children}</code>
+              <pre className="chat-bubble bg-base-200 text-base-content p-3 rounded-box overflow-x-auto text-sm shadow">
+                <code className={className} {...props}>{children}</code>
               </pre>
             );
           },
           table: ({ children }) => (
-            <table className="table-auto border-collapse border border-base-300 w-full text-left">
-              {children}
-            </table>
+            <div className="overflow-x-auto">
+              <table className="table-auto border-collapse border border-base-300 w-full text-left">
+                {children}
+              </table>
+            </div>
           ),
           thead: ({ children }) => (
             <thead className="bg-base-200 text-base-content">
@@ -66,7 +71,9 @@ const MarkdownMessage = ({ content }) => {
             </td>
           ),
         }}
-      />
+      >
+        {content}
+      </ReactMarkdown>
     </div>
   );
 };
