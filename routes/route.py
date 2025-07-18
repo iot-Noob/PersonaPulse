@@ -45,6 +45,89 @@ async def lifespan(app: APIRouter):
     print("SHUTDOWN: Clean up resources")
 
 route = APIRouter(lifespan=lifespan)
+ 
+def make_echart(prompt: str, model, temperature: float):
+    try:
+        SYSTEM_PROMPT = """
+        You are a helpful assistant focused exclusively on generating valid ECharts option objects in JSON format.
+        Return ONLY the JSON object for the chart (do not wrap in code blocks or embed in markdown).
+        Supported chart types: bar, line, pie, scatter, radar.
+        Use realistic example data only. If you cannot generate a valid chart, return an empty object: {}.
+        """.strip()
+
+        messages = [
+            {"role": "system", "content": SYSTEM_PROMPT},
+            {"role": "user", "content": prompt}
+        ]
+
+        response = client.chat.completions.create(
+            model=model.value,
+            messages=messages,
+            temperature=temperature,
+        )
+
+        raw = response.choices[0].message.content.strip()
+
+        # Remove code block syntax if present
+        if raw.startswith("```"):
+            raw = raw.strip("`").strip()
+            if raw.lower().startswith("json"):
+                raw = raw[4:].strip()
+
+        # Parse JSON
+        try:
+            chart_option = json.loads(raw)
+            if isinstance(chart_option, dict):
+                return chart_option
+            else:
+                return {}  # Not a valid ECharts object
+        except json.JSONDecodeError:
+            return {}  # Model didn't return valid JSON
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error generating ECharts: {e}")
+    
+    
+@route.get("/echarts", tags=["echart response"])
+async def get_chart(
+    prmopt: str,
+    model: OpenAIModel,
+    temperature: float = 0.0,
+):
+    try:
+        res=make_echart(prmopt,model,temperature)
+        return res
+    except Exception as e:
+        raise HTTPException(500, f"Error occurred in ECharts generation: {str(e)}")
+    
+DEFAULT_SYSTEM_PROMPT = """
+You are a helpful and truthful assistant.
+
+## 📐 Formatting Rules
+- Use headings (##, ###), bullet or numbered lists.
+- Inline code (`...`) for short snippets.
+- Fenced code blocks with language tags (e.g. ```python) for any full code.
+- Do NOT wrap tables/text in code blocks.
+- Render tables in plain Markdown (pipes + dashes).
+- Preserve line breaks in poems or structured text.
+
+## 🧠 Factuality Rules
+- Provide only verified, factual information.
+- If unsure or unverified, respond: “I’m not certain” or “I don’t know.”
+- Do NOT invent functions, APIs, or data.
+- When referencing facts or APIs, cite credible sources or say “According to [source]...”
+
+## 🛠️ Reasoning & Verification
+- Use Chain-of-Thought: “Let’s think step-by-step.”
+- Then use Chain-of-Verification: re-check each fact before finalizing.
+- Optionally include a few-shot example where the correct answer is “I don’t know.”
+
+## 📡 (Optional) RAG
+- If external data is available, retrieve and cite it.
+- If no source found, say “I couldn’t verify that.”
+
+Your final response must strictly follow all the above rules.
+""".strip()
 
 @route.post(path="/simple_prompt", tags=["Simple_prompt"])
 async def simple_prompt(role: RoleEnum, model: OpenAIModel, prompt: Prompt_Input, temperature: float = 0.3,character: Optional[gc] = None):
@@ -54,6 +137,10 @@ async def simple_prompt(role: RoleEnum, model: OpenAIModel, prompt: Prompt_Input
             raise HTTPException(status_code=400, detail="Temperature must be between 0.0 and 1.0")
 
         messages = [
+            {
+                "role":"system",
+                "content":DEFAULT_SYSTEM_PROMPT
+            },
             {
                 "role": role.value,  # Convert enum to string
                 "content": prompt.prompt,
@@ -125,6 +212,7 @@ async def chain_res(creq: ChainRequest, temperature: float = 0.3, character: Opt
                 raise HTTPException(status_code=404, detail="Character not found in manifest")
 
         # Step 2: Add system message
+        messages.append({"role":"system","content":DEFAULT_SYSTEM_PROMPT})
         messages.append({
             "role": creq.system.role,
             "content": creq.system.prompt

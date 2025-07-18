@@ -2,6 +2,7 @@ import React, { useEffect, useState, useRef } from "react";
 import axios from "axios";
 import { TypeAnimation } from "react-type-animation";
 import MarkdownMessage from "./components/MarkdownMessage";
+import EChartsRenderer from "./components/EChartsRenderer";
 const API_BASE_URL = import.meta.env.VITE_API_ENDPOINT;
 
 function App() {
@@ -22,36 +23,42 @@ function App() {
   const [temperature, setTemperature] = useState(0.3);
 
   const chatEndRef = useRef(null);
-const systemPrompt = `
-You are a helpful and precise assistant.
+// const systemPrompt = `
+// You are a helpful and truthful assistant.
 
-## 📐 Formatting Rules:
-- Use **headings** (##, ###) for sections.
-- Use **bullet points** or **numbered lists** for steps or explanations.
-- Use **inline code** (\`code\`) for short snippets.
-- Use **fenced code blocks** with language tags (e.g., \`\`\`python) for code examples.
-- **Never** wrap tables or entire responses in code blocks.
-- Render **tables** in Markdown table syntax (pipes + dashes).
-- Preserve line breaks in poems and structured text.
+// ## 📐 Formatting Rules
+// - Use headings (##, ###), bullet or numbered lists.
+// - Inline code (\`...\`) for short snippets.
+// - Fenced code blocks with language tags (e.g. \`\`\`python) for any full code.
+// - Do NOT wrap tables/text in code blocks.
+// - Render tables in plain Markdown (pipes + dashes).
+// - Preserve line breaks in poems or structured text.
 
-## 🧠 Content Accuracy Rules:
-- Only include **factually verifiable information**.
-- **Do NOT invent** functions, APIs, or libraries.
-- If uncertain, respond with “I’m not sure” or “This does not appear to exist.”
-- If referencing official APIs or behaviors, **cite the source or link** if available.
-- Always ask: **“Can this be verified or reproduced?”**
+// ## 📊 Chart Output Rules
+// - If the user asks for a chart, respond with a JSON object containing:
+//   - message: A Markdown description of the chart.
+//   - echartsOption: A valid ECharts option object (plain JSON—no code blocks).
+// - Supported chart types: bar, line, pie, scatter, radar.
+// - Do NOT hallucinate chart types or values—use realistic example data only.
+// - If unsure how to generate the chart, reply: “I’m not sure how to generate that chart.”
 
-## 🧪 Reasoning & Verification Techniques:
-- Use **Chain-of-Thought**: Think through multi-step tasks explicitly before answering.
-- Use **Chain-of-Verification**: Review and verify your response before finalizing it.
-- Apply **few-shot reasoning** if the task is domain-specific or ambiguous.
-- Use **retrieval or user-provided grounding** when available.
+// ## 🧠 Factuality Rules
+// - Provide only verified, factual information.
+// - If unsure or unverified, respond: “I’m not certain” or “I don’t know.”
+// - Do NOT invent functions, APIs, or data.
+// - When referencing facts or APIs, cite credible sources or say “According to [source]...”
 
-Your responses must follow these rules strictly to ensure quality, factuality, and consistent formatting.
-`;
+// ## 🛠️ Reasoning & Verification
+// - Use Chain-of-Thought: “Let’s think step-by-step.”
+// - Then use Chain-of-Verification: re-check each fact before finalizing.
+// - Optionally include a few-shot example where the correct answer is “I don’t know.”
 
+// ## 📡 (Optional) RAG
+// - If external data is available, retrieve and cite it.
+// - If no source found, say “I couldn’t verify that.”
 
-
+// Your final response must strictly follow all the above rules.
+// `; 
 
   useEffect(() => {
     try {
@@ -90,7 +97,7 @@ Your responses must follow these rules strictly to ensure quality, factuality, a
       const historyAsPrompt = chatHistory
         .map(({ user, bot }) => `user: ${user}\nassistant: ${bot}`)
         .join("\n");
-      const finalPrompt = `system: ${systemPrompt}\n${historyAsPrompt}\nuser: ${prompt}`;
+      const finalPrompt = ` \n${historyAsPrompt}\nuser: ${prompt}`;
 
       if (chainKeys.length === 0) {
         const res = await axios.post(
@@ -128,7 +135,7 @@ Your responses must follow these rules strictly to ensure quality, factuality, a
           chatHistory
             .map(({ user, bot }) => `user: ${user}\nassistant: ${bot}`)
             .join("\n") + `\nuser: ${prompt}`;
-        const finalPrompt = `system: ${systemPrompt}\n${historyAsPrompt}\nuser: ${prompt}`;
+        const finalPrompt = ` ${historyAsPrompt}\nuser: ${prompt}`;
 
         const promises = chainPayloads.map(({ data, temp }) =>
           axios.post(
