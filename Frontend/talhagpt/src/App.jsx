@@ -22,21 +22,8 @@ function App() {
   const [temperature, setTemperature] = useState(0.3);
 
   const chatEndRef = useRef(null);
- const systemPrompt = `
-You are a concise, helpful assistant that ONLY responds with valid JSON.
+  const systemPrompt = `You are a helpful assistant. Format all your responses using Markdown. Use code blocks for code, headers where appropriate, lists for steps, and preserve line breaks in poems.`;
 
-Always respond with an object in this format:
-{
-  "message": "Markdown-formatted explanation",
-  "code": "optional code snippet (Python, JS, etc)",
-  "echartsOption": "optional ECharts option object"
-}
-
-- DO NOT explain outside the JSON.
-- DO NOT add extra Markdown or prose outside the JSON format.
-- If returning a chart, use only the 'echartsOption' field.
-- All output must be valid JSON — parsable by JSON.parse().
-`;
   useEffect(() => {
     try {
       axios
