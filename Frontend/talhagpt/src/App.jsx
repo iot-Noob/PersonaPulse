@@ -21,44 +21,45 @@ function App() {
   const [newChainName, setNewChainName] = useState("");
   const [chatHistory, setChatHistory] = useState([]);
   const [temperature, setTemperature] = useState(0.3);
-
+  const [Mode, setMode] = useState("Prompt");
+  const all_mode = ["Analytical", "Prompt"];
   const chatEndRef = useRef(null);
-// const systemPrompt = `
-// You are a helpful and truthful assistant.
+  // const systemPrompt = `
+  // You are a helpful and truthful assistant.
 
-// ## 📐 Formatting Rules
-// - Use headings (##, ###), bullet or numbered lists.
-// - Inline code (\`...\`) for short snippets.
-// - Fenced code blocks with language tags (e.g. \`\`\`python) for any full code.
-// - Do NOT wrap tables/text in code blocks.
-// - Render tables in plain Markdown (pipes + dashes).
-// - Preserve line breaks in poems or structured text.
+  // ## 📐 Formatting Rules
+  // - Use headings (##, ###), bullet or numbered lists.
+  // - Inline code (\`...\`) for short snippets.
+  // - Fenced code blocks with language tags (e.g. \`\`\`python) for any full code.
+  // - Do NOT wrap tables/text in code blocks.
+  // - Render tables in plain Markdown (pipes + dashes).
+  // - Preserve line breaks in poems or structured text.
 
-// ## 📊 Chart Output Rules
-// - If the user asks for a chart, respond with a JSON object containing:
-//   - message: A Markdown description of the chart.
-//   - echartsOption: A valid ECharts option object (plain JSON—no code blocks).
-// - Supported chart types: bar, line, pie, scatter, radar.
-// - Do NOT hallucinate chart types or values—use realistic example data only.
-// - If unsure how to generate the chart, reply: “I’m not sure how to generate that chart.”
+  // ## 📊 Chart Output Rules
+  // - If the user asks for a chart, respond with a JSON object containing:
+  //   - message: A Markdown description of the chart.
+  //   - echartsOption: A valid ECharts option object (plain JSON—no code blocks).
+  // - Supported chart types: bar, line, pie, scatter, radar.
+  // - Do NOT hallucinate chart types or values—use realistic example data only.
+  // - If unsure how to generate the chart, reply: “I’m not sure how to generate that chart.”
 
-// ## 🧠 Factuality Rules
-// - Provide only verified, factual information.
-// - If unsure or unverified, respond: “I’m not certain” or “I don’t know.”
-// - Do NOT invent functions, APIs, or data.
-// - When referencing facts or APIs, cite credible sources or say “According to [source]...”
+  // ## 🧠 Factuality Rules
+  // - Provide only verified, factual information.
+  // - If unsure or unverified, respond: “I’m not certain” or “I don’t know.”
+  // - Do NOT invent functions, APIs, or data.
+  // - When referencing facts or APIs, cite credible sources or say “According to [source]...”
 
-// ## 🛠️ Reasoning & Verification
-// - Use Chain-of-Thought: “Let’s think step-by-step.”
-// - Then use Chain-of-Verification: re-check each fact before finalizing.
-// - Optionally include a few-shot example where the correct answer is “I don’t know.”
+  // ## 🛠️ Reasoning & Verification
+  // - Use Chain-of-Thought: “Let’s think step-by-step.”
+  // - Then use Chain-of-Verification: re-check each fact before finalizing.
+  // - Optionally include a few-shot example where the correct answer is “I don’t know.”
 
-// ## 📡 (Optional) RAG
-// - If external data is available, retrieve and cite it.
-// - If no source found, say “I couldn’t verify that.”
+  // ## 📡 (Optional) RAG
+  // - If external data is available, retrieve and cite it.
+  // - If no source found, say “I couldn’t verify that.”
 
-// Your final response must strictly follow all the above rules.
-// `; 
+  // Your final response must strictly follow all the above rules.
+  // `;
 
   useEffect(() => {
     try {
@@ -100,24 +101,51 @@ function App() {
       const finalPrompt = ` \n${historyAsPrompt}\nuser: ${prompt}`;
 
       if (chainKeys.length === 0) {
-        const res = await axios.post(
-          `${API_BASE_URL}/simple_prompt`,
-          { prompt: finalPrompt },
-          {
-            params: {
-              role: selectedRole,
-              model: selectedModel,
-              character: selectedCharacter || null,
-              temperature,
-            },
-          }
-        );
+        if (Mode === "Prompt") {
+          const res = await axios.post(
+            `${API_BASE_URL}/simple_prompt`,
+            { prompt: finalPrompt },
+            {
+              params: {
+                role: selectedRole,
+                model: selectedModel,
+                character: selectedCharacter || null,
+                temperature,
+              },
+            }
+          );
 
-        setResponse(res.data.response);
-        setChatHistory((prev) => [
-          ...prev,
-          { user: prompt, bot: res.data.response },
-        ]);
+          setResponse(res.data.response);
+          setChatHistory((prev) => [
+            ...prev,
+            { user: prompt, bot: res.data.response },
+          ]);
+        }
+        if (Mode == "Analytical") {
+          const res = await axios.post(
+            `${API_BASE_URL}/echarts`,
+            { prompt: finalPrompt },
+
+            {
+              params: {
+                model: selectedModel,
+                temperature,
+              },
+            }
+          );
+
+          setResponse(res);
+          setChatHistory((prev) => [
+            ...prev,
+            {
+              user: prompt,
+              bot: {
+                message: res.data.message, // markdown explanation
+                echartsOption: res.data, // actual ECharts config
+              },
+            },
+          ]);
+        }
       } else {
         const chainPayloads = chainKeys.map((key) => {
           const chainData = chains[key];
@@ -229,7 +257,18 @@ function App() {
               <div className="chat chat-start">
                 <div className="chat-bubble bg-primary text-white text-sm max-w-xl">
                   {/* <TypeAnimation sequence={[chat.bot]} speed={99} wrapper="span" cursor={false} /> */}
-                  <MarkdownMessage content={chat.bot} key={index} />
+
+                  <MarkdownMessage
+                    content={Mode === "Prompt" ? chat.bot : chat.bot?.message}
+                    key={`msg-${index}`}
+                  />
+                  {Mode === "Analytical" && typeof chat.bot === "object" && (
+                    <EChartsRenderer
+                      option={chat.bot.echartsOption}
+                      key={`chart-${index}`}
+                    />
+                  )}
+                
                 </div>
               </div>
             </div>
@@ -283,6 +322,25 @@ function App() {
               </select>
 
               <select
+                className="select select-sm bg-gray-800/80 text-white w-28"
+                value={Mode}
+                onChange={(e) => {
+                  setChatHistory([])
+                  setMode(e.target.value)
+                }}
+              >
+                <option disabled value="">
+                  Mode
+                </option>
+                {all_mode.map((v, i) => (
+                  <option key={i} value={v}>
+                    {v}
+                  </option>
+                ))}
+              </select>
+
+              <select
+                disabled={Mode == "Analytical"}
                 className="select select-sm bg-gray-800/80 text-white w-28"
                 value={selectedCharacter}
                 onChange={(e) => {
@@ -349,99 +407,105 @@ function App() {
             </div>
             <div className="flex flex-wrap gap-4">
               {Object.entries(chains).map(([chainName, chainData]) => {
-  const items = chainData.items;
-  const temp = chainData.temperature;
-  return (
-    <div
-      key={chainName}
-      className="bg-gray-800 rounded-xl p-4 w-full sm:w-[45%] text-xs shadow-md flex flex-col gap-3"
-    >
-      {/* Chain Header: Name + Delete */}
-      <div className="flex justify-between items-center">
-        <input
-          className="bg-transparent font-semibold truncate outline-none text-white text-sm flex-1"
-          value={chainName}
-          onChange={(e) => {
-            const newName = e.target.value;
-            if (chains[newName] && newName !== chainName) {
-              setError("Chain name already exists.");
-              return;
-            }
-            const newChains = { ...chains };
-            newChains[newName] = newChains[chainName];
-            delete newChains[chainName];
-            setChains(newChains);
-          }}
-        />
-        <button
-          className="text-red-400 hover:text-red-600 ml-2"
-          onClick={() => removeChain(chainName)}
-        >
-          ✕
-        </button>
-      </div>
+                const items = chainData.items;
+                const temp = chainData.temperature;
+                return (
+                  <div
+                    key={chainName}
+                    className="bg-gray-800 rounded-xl p-4 w-full sm:w-[45%] text-xs shadow-md flex flex-col gap-3"
+                  >
+                    {/* Chain Header: Name + Delete */}
+                    <div className="flex justify-between items-center">
+                      <input
+                        className="bg-transparent font-semibold truncate outline-none text-white text-sm flex-1"
+                        value={chainName}
+                        onChange={(e) => {
+                          const newName = e.target.value;
+                          if (chains[newName] && newName !== chainName) {
+                            setError("Chain name already exists.");
+                            return;
+                          }
+                          const newChains = { ...chains };
+                          newChains[newName] = newChains[chainName];
+                          delete newChains[chainName];
+                          setChains(newChains);
+                        }}
+                      />
+                      <button
+                        className="text-red-400 hover:text-red-600 ml-2"
+                        onClick={() => removeChain(chainName)}
+                      >
+                        ✕
+                      </button>
+                    </div>
 
-      {/* Each item: Role + Prompt + Remove (Temp on same line) */}
-      <div className="flex flex-col gap-2">
-        {items.map((item, idx) => (
-          <div
-            key={idx}
-            className="flex items-center gap-2 bg-gray-700 rounded-lg px-2 py-1 hover:bg-gray-600"
-          >
-            <select
-              className="select select-xs bg-gray-800/80 text-white border-none w-24"
-              value={item.role}
-              onChange={(e) =>
-                updateChainItem(chainName, idx, "role", e.target.value)
-              }
-            >
-              <option disabled value="">
-                Role
-              </option>
-              {roles.map((r) => (
-                <option key={r} value={r}>
-                  {r}
-                </option>
-              ))}
-            </select>
-  {idx === 0 && (
-              <input
-                type="number"
-                step="0.1"
-                min="0.1"
-                max="1"
-                value={temp}
-                onChange={(e) =>
-                  setChains({
-                    ...chains,
-                    [chainName]: {
-                      ...chainData,
-                      temperature: parseFloat(e.target.value),
-                    },
-                  })
-                }
-                className="input input-xs bg-gray-800 text-white w-16"
-                title="Temperature"
-              />
-            )}
-            <input
-              className="flex-1 bg-transparent border-none outline-none text-white text-xs"
-              value={item.prompt}
-              onChange={(e) =>
-                updateChainItem(chainName, idx, "prompt", e.target.value)
-              }
-              placeholder="Prompt"
-            />
-
-          
- 
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-})}
-
+                    {/* Each item: Role + Prompt + Remove (Temp on same line) */}
+                    <div className="flex flex-col gap-2">
+                      {items.map((item, idx) => (
+                        <div
+                          key={idx}
+                          className="flex items-center gap-2 bg-gray-700 rounded-lg px-2 py-1 hover:bg-gray-600"
+                        >
+                          <select
+                            className="select select-xs bg-gray-800/80 text-white border-none w-24"
+                            value={item.role}
+                            onChange={(e) =>
+                              updateChainItem(
+                                chainName,
+                                idx,
+                                "role",
+                                e.target.value
+                              )
+                            }
+                          >
+                            <option disabled value="">
+                              Role
+                            </option>
+                            {roles.map((r) => (
+                              <option key={r} value={r}>
+                                {r}
+                              </option>
+                            ))}
+                          </select>
+                          {idx === 0 && (
+                            <input
+                              type="number"
+                              step="0.1"
+                              min="0.1"
+                              max="1"
+                              value={temp}
+                              onChange={(e) =>
+                                setChains({
+                                  ...chains,
+                                  [chainName]: {
+                                    ...chainData,
+                                    temperature: parseFloat(e.target.value),
+                                  },
+                                })
+                              }
+                              className="input input-xs bg-gray-800 text-white w-16"
+                              title="Temperature"
+                            />
+                          )}
+                          <input
+                            className="flex-1 bg-transparent border-none outline-none text-white text-xs"
+                            value={item.prompt}
+                            onChange={(e) =>
+                              updateChainItem(
+                                chainName,
+                                idx,
+                                "prompt",
+                                e.target.value
+                              )
+                            }
+                            placeholder="Prompt"
+                          />
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                );
+              })}
             </div>
             <div className="mt-4">
               <button onClick={addNewChain} className="btn btn-sm btn-accent">

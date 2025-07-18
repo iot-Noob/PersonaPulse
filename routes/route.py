@@ -3,7 +3,7 @@ from re import T
 from tkinter import NO
 from token import OP
 from Models.gpt_mod import OpenAIModel
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException,Query
 from fastapi.responses import JSONResponse,StreamingResponse
 from Models.main_model import ChainRequest,RoleEnum,Prompt_Input
 from Models.dyn_enum import get_character_enum
@@ -14,6 +14,7 @@ from contextlib import asynccontextmanager
 import json
 from uuid import uuid4
 from typing import Optional
+
 load_dotenv()
 base_dir = os.path.dirname(os.path.abspath(__file__))
 roles_dir = os.path.join(base_dir, "../Roles")
@@ -52,12 +53,14 @@ def make_echart(prompt: str, model, temperature: float):
         You are a helpful assistant focused exclusively on generating valid ECharts option objects in JSON format.
         Return ONLY the JSON object for the chart (do not wrap in code blocks or embed in markdown).
         Supported chart types: bar, line, pie, scatter, radar.
-        Use realistic example data only. If you cannot generate a valid chart, return an empty object: {}.
+        Use realistic example data only.
+        Always include tooltip for better interactivity.
+        If you cannot generate a valid chart, return an empty object: {}.
         """.strip()
 
         messages = [
             {"role": "system", "content": SYSTEM_PROMPT},
-            {"role": "user", "content": prompt}
+            {"role": "user", "content": prompt.prompt}
         ]
 
         response = client.chat.completions.create(
@@ -88,11 +91,12 @@ def make_echart(prompt: str, model, temperature: float):
         raise HTTPException(status_code=500, detail=f"Error generating ECharts: {e}")
     
     
-@route.get("/echarts", tags=["echart response"])
+@route.post("/echarts", tags=["echart response"])
 async def get_chart(
-    prmopt: str,
+    prmopt:Prompt_Input,
     model: OpenAIModel,
-    temperature: float = 0.0,
+    temperature: float,
+    
 ):
     try:
         res=make_echart(prmopt,model,temperature)
