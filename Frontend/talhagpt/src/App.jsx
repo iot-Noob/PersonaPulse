@@ -326,6 +326,7 @@ function App() {
                 value={Mode}
                 onChange={(e) => {
                   setChatHistory([])
+                 setChains({} )
                   setMode(e.target.value)
                 }}
               >
@@ -346,6 +347,7 @@ function App() {
                 onChange={(e) => {
                   setSelectedCharacter(e.target.value);
                   setChatHistory([]);
+                  setChains({} )
                 }}
               >
                 <option disabled value="">
