@@ -6,7 +6,7 @@
     },
      {
       "file": "trump.json",
-      "subname": "Donald Trump"
+      "subname": "Trump(America President)"
     },
     {
       "file": "ags_tp.json",
@@ -59,6 +59,10 @@
    {
     "file":"ai_ml_eng.json",
      "subname": "AI ML Prompt Eng"
+  },
+  {
+    "file":"Dr. Roland Mahmood.json",
+     "subname": "Dr. Roland(Psychetrist/Psycologist)"
   }
   ]
 }
