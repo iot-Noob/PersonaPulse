@@ -1,7 +1,6 @@
 from fileinput import filename
 from re import T
-from tkinter import NO
-from token import OP
+ 
 from Models.gpt_mod import OpenAIModel
 from fastapi import APIRouter, HTTPException,Query
 from fastapi.responses import JSONResponse,StreamingResponse
