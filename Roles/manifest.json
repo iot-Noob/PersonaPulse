@@ -67,6 +67,10 @@
    {
     "file":"FrontendDev.json",
      "subname": "Front End Dev JS dev"
+  },
+    {
+    "file":"Psysic_Healer.json",
+     "subname": "Psysic Healer"
   }
   ]
 }
