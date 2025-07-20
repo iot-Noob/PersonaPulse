@@ -255,7 +255,7 @@ function App() {
                 </div>
               </div>
               <div className="chat chat-start">
-                <div className="chat-bubble bg-primary text-white text-sm max-w-xl">
+                <div className="chat-bubble bg-primary text-white text-sm max-w-[80vw] sm:max-w-xl">
                   {/* <TypeAnimation sequence={[chat.bot]} speed={99} wrapper="span" cursor={false} /> */}
 
                   <MarkdownMessage
@@ -268,7 +268,6 @@ function App() {
                       key={`chart-${index}`}
                     />
                   )}
-                
                 </div>
               </div>
             </div>
@@ -279,7 +278,7 @@ function App() {
         <div className="sticky bottom-0  z-10 py-4">
           <div className="bg-gray-800/50 p-4 rounded-2xl space-y-3">
             {/* Message input and Send button (Same row) */}
-            <div className="flex gap-2">
+            <div className="flex flex-col sm:flex-row gap-2">
               <textarea
                 placeholder="Type your message..."
                 rows={1}
@@ -305,9 +304,9 @@ function App() {
             </div>
 
             {/* Options section below */}
-            <div className="flex flex-wrap gap-2">
+            <div className="flex flex-wrap gap-2 w-full">
               <select
-                className="select select-sm bg-gray-800/80 text-white w-28"
+                className="select select-sm bg-gray-800/80 text-white w-full sm:w-28 rounded-lg"
                 value={selectedModel}
                 onChange={(e) => setSelectedModel(e.target.value)}
               >
@@ -322,12 +321,12 @@ function App() {
               </select>
 
               <select
-                className="select select-sm bg-gray-800/80 text-white w-28"
+                className="select select-sm bg-gray-800/80 text-white w-full sm:w-28 rounded-lg"
                 value={Mode}
                 onChange={(e) => {
-                  setChatHistory([])
-                 setChains({} )
-                  setMode(e.target.value)
+                  setChatHistory([]);
+                  setChains({});
+                  setMode(e.target.value);
                 }}
               >
                 <option disabled value="">
@@ -342,12 +341,12 @@ function App() {
 
               <select
                 disabled={Mode == "Analytical"}
-                className="select select-sm bg-gray-800/80 text-white w-28"
+                className="select select-sm bg-gray-800/80 text-white w-full sm:w-28 rounded-lg"
                 value={selectedCharacter}
                 onChange={(e) => {
                   setSelectedCharacter(e.target.value);
                   setChatHistory([]);
-                  setChains({} )
+                  setChains({});
                 }}
               >
                 <option disabled value="">
@@ -359,7 +358,7 @@ function App() {
               </select>
 
               <select
-                className="select select-sm bg-gray-800/80 text-white w-24"
+                className="select select-sm bg-gray-800/80 text-white w-full sm:w-28 rounded-lg"
                 value={selectedRole}
                 onChange={(e) => setSelectedRole(e.target.value)}
               >
@@ -376,14 +375,17 @@ function App() {
                 step="0.1"
                 min="0.1"
                 max="1"
-                className="input input-sm w-20 bg-gray-800/80 text-white"
+                className="input input-sm bg-gray-800/80 text-white w-full sm:w-24 rounded-lg"
                 value={temperature}
                 onChange={(e) => setTemperature(parseFloat(e.target.value))}
                 placeholder="Temp"
                 title="Set temperature (0.1–1.0)"
               />
               <div className="mb-3 flex gap-2 items-center">
-                <label htmlFor="chainModal" className="btn btn-sm btn-accent">
+                <label
+                  htmlFor="chainModal"
+                  className="btn btn-sm btn-accent w-full sm:w-28 rounded-lg"
+                >
                   ⚙️ Chains
                 </label>
               </div>
@@ -397,7 +399,7 @@ function App() {
 
         <input type="checkbox" id="chainModal" className="modal-toggle" />
         <div className="modal">
-          <div className="modal-box w-11/12 max-w-4xl bg-gray-900 text-white overflow-y-auto max-h-[90vh]">
+          <div className="modal-box w-full sm:w-11/12 max-w-4xl px-3 sm:px-6 py-4 bg-gray-900 text-white max-h-[90vh] overflow-y-auto">
             <div className="flex justify-between items-center mb-2">
               <h3 className="font-bold text-lg">Chain Configuration</h3>
               <label
@@ -407,14 +409,14 @@ function App() {
                 ✕
               </label>
             </div>
-            <div className="flex flex-wrap gap-4">
+            <div className="flex flex-col sm:flex-row sm:flex-wrap gap-4">
               {Object.entries(chains).map(([chainName, chainData]) => {
                 const items = chainData.items;
                 const temp = chainData.temperature;
                 return (
                   <div
                     key={chainName}
-                    className="bg-gray-800 rounded-xl p-4 w-full sm:w-[45%] text-xs shadow-md flex flex-col gap-3"
+                    className="flex flex-col sm:flex-row sm:flex-wrap gap-4"
                   >
                     {/* Chain Header: Name + Delete */}
                     <div className="flex justify-between items-center">
@@ -490,7 +492,7 @@ function App() {
                             />
                           )}
                           <input
-                            className="flex-1 bg-transparent border-none outline-none text-white text-xs"
+                            className="input input-sm bg-gray-800 text-white placeholder-gray-400 rounded-xl w-full focus:outline-none focus:ring-2 focus:ring-primary"
                             value={item.prompt}
                             onChange={(e) =>
                               updateChainItem(

@@ -20,7 +20,7 @@ const MarkdownMessage = ({ content }) => {
           h2: ({ children }) => (
             <h2 className="text-xl font-semibold">{children}</h2>
           ),
-          p: ({ children }) => <p className="mb-2">{children}</p>,
+          p: ({ children }) => <p className="mb-2 sm:mb-3">{children}</p>,
           li: ({ children }) => <li className="list-disc ml-6">{children}</li>,
           blockquote: ({ children }) => (
             <blockquote className="border-l-4 border-info pl-4 italic text-info-content">
@@ -39,11 +39,11 @@ const MarkdownMessage = ({ content }) => {
           ),
           code({ inline, className, children, ...props }) {
             return inline ? (
-              <code className="bg-base-200 px-1 py-0.5 rounded text-sm">
+              <code className="bg-base-200 px-1 py-0.5 rounded text-xs sm:text-sm">
                 {children}
               </code>
             ) : (
-              <pre className="chat-bubble bg-base-200 text-base-content p-3 rounded-box overflow-x-auto text-sm shadow">
+              <pre className="chat-bubble bg-base-200 text-base-content p-3 rounded-box overflow-x-auto text-xs sm:text-sm shadow">
                 <code className={className} {...props}>{children}</code>
               </pre>
             );
