@@ -246,7 +246,7 @@ function App() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-950 to-gray-900 text-white font-sans flex flex-col">
+    <div className=" min-h-screen bg-gradient-to-br from-gray-950 to-gray-900 text-white font-sans flex flex-col">
       <div className="max-w-4xl mx-auto px-4 py-6 w-full flex flex-col flex-grow">
         <div className="flex-1 w-full h-full">
           <div
@@ -285,7 +285,7 @@ function App() {
         </div>
 
         <div className="sticky bottom-0  z-10 py-4">
-          <div className="bg-gray-800/50 p-4 rounded-2xl space-y-3">
+          <div className="bg-gray-800/70 p-4 rounded-2xl space-y-3">
             {/* Message input and Send button (Same row) */}
             <div className="flex flex-col sm:flex-row gap-2">
               <textarea
