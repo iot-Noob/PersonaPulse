@@ -20,10 +20,11 @@ function App() {
   const [selectedChain, setSelectedChain] = useState(null);
   const [newChainName, setNewChainName] = useState("");
   const [chatHistory, setChatHistory] = useState([]);
-  const [temperature, setTemperature] = useState(0.3);
+  const [temperature, setTemperature] = useState(0.0);
   const [Mode, setMode] = useState("Prompt");
   const all_mode = ["Analytical", "Prompt"];
   const chatEndRef = useRef(null);
+  const sref = useRef(null);
   // const systemPrompt = `
   // You are a helpful and truthful assistant.
 
@@ -82,6 +83,7 @@ function App() {
 
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    sref.current?.scrollIntoView({ behavior: "smooth" });
   }, [chatHistory]);
 
   const handleSubmit = async () => {
@@ -246,33 +248,40 @@ function App() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-950 to-gray-900 text-white font-sans flex flex-col">
       <div className="max-w-4xl mx-auto px-4 py-6 w-full flex flex-col flex-grow">
-        <div className="flex-1 overflow-auto space-y-4">
-          {chatHistory.map((chat, index) => (
-            <div key={index}>
-              <div className="chat chat-end">
-                <div className="chat-bubble bg-base-200 text-black text-sm max-w-xl">
-                  {chat.user}
+        <div className="flex-1 w-full h-full">
+          <div
+            className="h-[calc(100vh-200px)] overflow-y-auto pr-2 space-y-4"
+            style={{
+              scrollbarWidth: "thin",
+              scrollbarColor: "#888 transparent",
+            }}
+          >
+            {chatHistory.map((chat, index) => (
+              <div key={index}>
+                {/* User message */}
+                <div className="chat chat-end">
+                  <div className="chat-bubble bg-base-200 text-black text-sm max-w-xl">
+                    {chat.user}
+                  </div>
                 </div>
-              </div>
-              <div className="chat chat-start">
-                <div className="chat-bubble bg-primary text-white text-sm max-w-[80vw] sm:max-w-xl">
-                  {/* <TypeAnimation sequence={[chat.bot]} speed={99} wrapper="span" cursor={false} /> */}
-
-                  <MarkdownMessage
-                    content={Mode === "Prompt" ? chat.bot : chat.bot?.message}
-                    key={`msg-${index}`}
-                  />
-                  {Mode === "Analytical" && typeof chat.bot === "object" && (
-                    <EChartsRenderer
-                      option={chat.bot.echartsOption}
-                      key={`chart-${index}`}
+                <div className="chat chat-start" ref={sref}>
+                  <div className="chat-bubble bg-primary text-white text-sm max-w-[80vw] sm:max-w-xl">
+                    <MarkdownMessage
+                      content={Mode === "Prompt" ? chat.bot : chat.bot?.message}
+                      key={`msg-${index}`}
                     />
-                  )}
+                    {Mode === "Analytical" && typeof chat.bot === "object" && (
+                      <EChartsRenderer
+                        option={chat.bot.echartsOption}
+                        key={`chart-${index}`}
+                      />
+                    )}
+                  </div>
                 </div>
               </div>
-            </div>
-          ))}
-          <div ref={chatEndRef} />
+            ))}
+            <div ref={chatEndRef} />
+          </div>
         </div>
 
         <div className="sticky bottom-0  z-10 py-4">
@@ -291,7 +300,7 @@ function App() {
                 }}
               />
               <button
-                className="btn btn-sm btn-primary shrink-0"
+                className="btn btn-sm btn-primary shrink-0 "
                 onClick={handleSubmit}
                 disabled={loading}
               >
@@ -303,8 +312,110 @@ function App() {
               </button>
             </div>
 
-            {/* Options section below */}
-            <div className="flex flex-wrap gap-2 w-full">
+            {/* Start other options */}
+
+            {/* Accordion for small screens */}
+
+            <div className="block sm:hidden w-full">
+              <div className="collapse collapse-arrow bg-gray-800/90 text-white rounded-lg border border-gray-700">
+                <input type="checkbox" />
+                <div className="collapse-title text-lg font-medium">
+                  ⚙️ Options
+                </div>
+                <div className="collapse-content bg-gray-900/90 p-2 rounded-b-lg">
+                  <div className="flex flex-wrap gap-2 w-full">
+                    <select
+                      className="select select-sm bg-gray-800/80 text-white w-full rounded-lg border-none"
+                      value={selectedModel}
+                      onChange={(e) => setSelectedModel(e.target.value)}
+                    >
+                      <option disabled value="">
+                        Model
+                      </option>
+                      {models.map((v, i) => (
+                        <option key={i} value={v}>
+                          {v}
+                        </option>
+                      ))}
+                    </select>
+
+                    <select
+                      className="select select-sm bg-gray-800/80 text-white w-full rounded-lg border-none"
+                      value={Mode}
+                      onChange={(e) => {
+                        setChatHistory([]);
+                        setChains({});
+                        setMode(e.target.value);
+                      }}
+                    >
+                      <option disabled value="">
+                        Mode
+                      </option>
+                      {all_mode.map((v, i) => (
+                        <option key={i} value={v}>
+                          {v}
+                        </option>
+                      ))}
+                    </select>
+
+                    <select
+                      disabled={Mode === "Analytical"}
+                      className="select select-sm bg-gray-800/80 text-white w-full rounded-lg border-none"
+                      value={selectedCharacter}
+                      onChange={(e) => {
+                        setSelectedCharacter(e.target.value);
+                        setChatHistory([]);
+                        setChains({});
+                      }}
+                    >
+                      <option disabled value="">
+                        Character
+                      </option>
+                      {characters.map((c) => (
+                        <option key={c}>{c}</option>
+                      ))}
+                    </select>
+
+                    <select
+                      className="select select-sm bg-gray-800/80 text-white w-full rounded-lg border-none"
+                      value={selectedRole}
+                      onChange={(e) => setSelectedRole(e.target.value)}
+                    >
+                      <option disabled value="">
+                        Role
+                      </option>
+                      {roles.map((r) => (
+                        <option key={r}>{r}</option>
+                      ))}
+                    </select>
+
+                    <input
+                      type="number"
+                      step="0.1"
+                      min="0.1"
+                      max="1"
+                      className="input input-sm bg-gray-800/80 text-white w-full rounded-lg border-none"
+                      value={temperature}
+                      onChange={(e) =>
+                        setTemperature(parseFloat(e.target.value))
+                      }
+                      placeholder="Temp"
+                      title="Set temperature (0.1–1.0)"
+                    />
+
+                    <label
+                      htmlFor="chainModal"
+                      className="btn btn-sm btn-accent w-full rounded-lg"
+                    >
+                      ⚙️ Chains
+                    </label>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Original layout for larger screens */}
+            <div className="hidden sm:flex flex-wrap gap-2 w-full">
               <select
                 className="select select-sm bg-gray-800/80 text-white w-full sm:w-28 rounded-lg"
                 value={selectedModel}
@@ -340,7 +451,7 @@ function App() {
               </select>
 
               <select
-                disabled={Mode == "Analytical"}
+                disabled={Mode === "Analytical"}
                 className="select select-sm bg-gray-800/80 text-white w-full sm:w-28 rounded-lg"
                 value={selectedCharacter}
                 onChange={(e) => {
@@ -381,14 +492,12 @@ function App() {
                 placeholder="Temp"
                 title="Set temperature (0.1–1.0)"
               />
-              <div className="mb-3 flex gap-2 items-center">
-                <label
-                  htmlFor="chainModal"
-                  className="btn btn-sm btn-accent w-full sm:w-28 rounded-lg"
-                >
-                  ⚙️ Chains
-                </label>
-              </div>
+              <label
+                htmlFor="chainModal"
+                className="btn btn-sm btn-accent w-full sm:w-28 rounded-lg"
+              >
+                ⚙️ Chains
+              </label>
             </div>
           </div>
 
