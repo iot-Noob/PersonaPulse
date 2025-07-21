@@ -1,11 +1,12 @@
-import React, { Suspense, lazy } from "react";
-import { Routes, Route,Navigate } from "react-router-dom";
-const MainRoutes=lazy(()=>import("./assets/routes/MianRoutes"))
-const NotFound=lazy(()=>import("./Pages/NotFound"))
+import React, { lazy, Suspense } from 'react';
+import { Route, Routes } from 'react-router-dom';
+import routes from './index';
 
-function App() {
+const MainRoutes = () => {
   return (
-    <Suspense fall  fallback={
+   <>
+   
+   <Suspense   fallback={
     <div className="w-full h-screen flex flex-col items-center justify-center bg-gray-900 text-white animate-pulse space-y-4">
       <svg
         className="animate-spin h-12 w-12 text-indigo-500"
@@ -32,14 +33,15 @@ function App() {
       </p>
     </div>
   }>
-      <Routes>
-         
-        <Route path="*" element={<NotFound />} />
-        <Route path="/persona/*" element={<MainRoutes />} />
-        <Route path="/" element={<Navigate to={"/persona/main"} />} />
-      </Routes>
-    </Suspense>
-  );
-}
+  <Routes>
+    {routes.map((route, i) => (
+      <Route key={i} path={route.path} element={route.element} />
+    ))}
+  </Routes>
+</Suspense>
 
-export default App;
+   </>
+  );
+};
+
+export default MainRoutes;

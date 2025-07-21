@@ -7,6 +7,7 @@ export default defineConfig({
     host: '0.0.0.0',
     port: 6900,
     strictPort: true,
+    historyApiFallback: true, // <- for React Router
 
     cors: {
       origin: ['https://persona.talhahub.io'], // ✅ no trailing slash here

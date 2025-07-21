@@ -1,35 +1,44 @@
 import React, { useEffect, useState, useRef } from "react";
-import axios  from "axios";
- 
+import axios from "axios";
+
 import ChatWindow from "../components/ChatWindow";
 import { TextInputBox } from "../components/TextInputBox";
 import { AccordSec } from "../components/AccordSec";
 import ChainModal from "../components/chainModal";
- 
+
 const API_BASE_URL = import.meta.env.VITE_API_ENDPOINT;
 
 const MainPage = () => {
-      const [models, setModels] = useState([]);
-      const [roles, setRoles] = useState([]);
-      const [characters, setCharacters] = useState([]);
-      const [selectedModel, setSelectedModel] = useState("llama3-8b-8192");
-      const [selectedRole, setSelectedRole] = useState("user");
-      const [selectedCharacter, setSelectedCharacter] = useState("");
-      const [prompt, setPrompt] = useState("");
-      const [response, setResponse] = useState("");
-      const [loading, setLoading] = useState(false);
-      const [error, setError] = useState("");
-      const [chains, setChains] = useState({});
-      const [selectedChain, setSelectedChain] = useState(null);
-      const [newChainName, setNewChainName] = useState("");
-      const [chatHistory, setChatHistory] = useState([]);
-      const [temperature, setTemperature] = useState(0.0);
-      const [Mode, setMode] = useState("Prompt");
-      const all_mode = ["Analytical", "Prompt"];
-      const chatEndRef = useRef(null);
-      const sref = useRef(null);
+  const [models, setModels] = useState([]);
+  const [roles, setRoles] = useState([]);
+  const [characters, setCharacters] = useState([]);
+  const [selectedModel, setSelectedModel] = useState("llama3-8b-8192");
+  const [selectedRole, setSelectedRole] = useState("user");
+  const [selectedCharacter, setSelectedCharacter] = useState("");
+  const [prompt, setPrompt] = useState("");
+  const [response, setResponse] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+  const [chains, setChains] = useState({});
+  const [selectedChain, setSelectedChain] = useState(null);
+  const [newChainName, setNewChainName] = useState("");
+  const [chatHistory, setChatHistory] = useState([]);
+  const [temperature, setTemperature] = useState(0.0);
+  const [Mode, setMode] = useState("Prompt");
+  const all_mode = ["Analytical", "Prompt"];
+  const chatEndRef = useRef(null);
+  const sref = useRef(null);
+  useEffect(() => {
+    const savedHistory = localStorage.getItem("chatHistory");
+    if (savedHistory) {
+      setChatHistory(JSON.parse(savedHistory));
+    }
+  }, []);
+  useEffect(() => {
+    localStorage.setItem("chatHistory", JSON.stringify(chatHistory));
+  }, [chatHistory]);
 
-       useEffect(() => {
+  useEffect(() => {
     try {
       axios
         .get(`${API_BASE_URL}/get_model`)
@@ -212,65 +221,67 @@ const MainPage = () => {
     if (selectedChain === chainName) setSelectedChain(null);
   };
 
-
   return (
- <>
-     <div className=" min-h-screen bg-gradient-to-br from-gray-950 to-gray-900 text-white font-sans flex flex-col">
-      <div className="max-w-4xl mx-auto px-4 py-6 w-full flex flex-col flex-grow">
-        <ChatWindow Mode={Mode} sref={sref} chatHistory={chatHistory} chatEndRef={chatEndRef}/>
+    <>
+      <div className=" min-h-screen bg-gradient-to-br from-gray-950 to-gray-900 text-white font-sans flex flex-col">
+        <div className="max-w-4xl mx-auto px-4 py-6 w-full flex flex-col flex-grow">
+          <ChatWindow
+            Mode={Mode}
+            sref={sref}
+            chatHistory={chatHistory}
+            chatEndRef={chatEndRef}
+          />
 
-        <div className="sticky bottom-0  z-10 py-4">
+          <div className="sticky bottom-0  z-10 py-4">
+            <div className="bg-gray-800/70 p-4 rounded-2xl space-y-3">
+              {/* Message input and Send button (Same row) */}
 
-          <div className="bg-gray-800/70 p-4 rounded-2xl space-y-3">
-          
-            {/* Message input and Send button (Same row) */}
+              <TextInputBox
+                setPrompt={setPrompt}
+                handleSubmit={handleSubmit}
+                loading={loading}
+                prompt={prompt}
+              />
 
-              <TextInputBox setPrompt={setPrompt} handleSubmit={handleSubmit} loading={loading} prompt={prompt} />
+              {/* Start other options */}
 
-            {/* Start other options */}
-             
-             <AccordSec
-              selectedModel={selectedModel}
-              setSelectedModel={setSelectedModel}
-              models={models}
-              setChatHistory={setChatHistory}
-              setChains={setChains}
-              setMode={setMode}
-              Mode={Mode}
-              all_mode={all_mode}
-              selectedCharacter={selectedCharacter}
-              setSelectedCharacter={setSelectedCharacter}
-              characters={characters}
-              selectedRole={selectedRole}
-              roles={roles}
-              temperature={temperature}
-              setTemperature={setTemperature}
-             />
+              <AccordSec
+                selectedModel={selectedModel}
+                setSelectedModel={setSelectedModel}
+                models={models}
+                setChatHistory={setChatHistory}
+                setChains={setChains}
+                setMode={setMode}
+                Mode={Mode}
+                all_mode={all_mode}
+                selectedCharacter={selectedCharacter}
+                setSelectedCharacter={setSelectedCharacter}
+                characters={characters}
+                selectedRole={selectedRole}
+                roles={roles}
+                temperature={temperature}
+                setTemperature={setTemperature}
+              />
+            </div>
 
+            {error && (
+              <div className="alert alert-error shadow-lg mt-2">{error}</div>
+            )}
           </div>
 
-          {error && (
-            <div className="alert alert-error shadow-lg mt-2">{error}</div>
-          )}
+          <ChainModal
+            addNewChain={addNewChain}
+            chains={chains}
+            removeChain={removeChain}
+            roles={roles}
+            setChains={setChains}
+            setError={setError}
+            updateChainItem={updateChainItem}
+          />
         </div>
-
-           <ChainModal
-           addNewChain={addNewChain}
-           chains={chains}
-           removeChain={removeChain}
-           roles={roles}
-           setChains={setChains}
-           setError={setError}
-           updateChainItem={updateChainItem}
-           />
-          
-         
-         
       </div>
-    </div>
- 
- </>
-  )
-}
+    </>
+  );
+};
 
-export default MainPage
+export default MainPage;
