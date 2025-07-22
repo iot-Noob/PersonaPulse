@@ -53,7 +53,7 @@ const MainPage = () => {
         .then((res) => setCharacters(res?.data?.characters))
         .catch(console.error);
     } catch (err) {
-      console.error(`Error occur fetch data due to `.err);
+      console.error(`Error occur fetch data due to `,err);
     }
   }, []);
 
@@ -224,7 +224,7 @@ const MainPage = () => {
   return (
     <>
       <div className=" min-h-screen bg-gradient-to-br from-gray-950 to-gray-900 text-white font-sans flex flex-col">
-        <div className="max-w-4xl mx-auto px-4 py-6 w-full flex flex-col flex-grow">
+        <div className="max-w-4xl mx-auto px-4 py-6 w-full flex flex-col flex-grow mt-[30px] ">
           <ChatWindow
             Mode={Mode}
             sref={sref}

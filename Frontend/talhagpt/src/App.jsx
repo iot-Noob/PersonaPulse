@@ -1,6 +1,6 @@
 import React, { Suspense, lazy } from "react";
 import { Routes, Route,Navigate } from "react-router-dom";
-const MainRoutes=lazy(()=>import("./assets/routes/MianRoutes"))
+const RouteSlicer=lazy(()=>import("./routes/RouteSlicer"))
 const NotFound=lazy(()=>import("./Pages/NotFound"))
 
 function App() {
@@ -35,7 +35,7 @@ function App() {
       <Routes>
          
         <Route path="*" element={<NotFound />} />
-        <Route path="/persona/*" element={<MainRoutes />} />
+        <Route path="/persona/*" element={<RouteSlicer />} />
         <Route path="/" element={<Navigate to={"/persona/main"} />} />
       </Routes>
     </Suspense>
