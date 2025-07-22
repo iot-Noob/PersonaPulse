@@ -71,6 +71,10 @@
     {
     "file":"Psysic_Healer.json",
      "subname": "Psysic Healer"
+  },
+   {
+    "file":"IslamicDream.json",
+     "subname": "Khawab ki tabeer (Islamic)"
   }
   ]
 }
