@@ -20,7 +20,10 @@
       "file": "modi.json",
       "subname": "Narindar Modi"
     },
-   
+      {
+      "file": "prmopt_corrector.json",
+      "subname": "Prompt Correct"
+    },
  
     {
       "file": "putin.json",
