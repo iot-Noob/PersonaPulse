@@ -46,6 +46,12 @@
     "file":"muna_bjai.json",
      "subname": "Muna Bhai MBBS"
   },
+
+     
+      {
+    "file":"shc.json",
+     "subname": "SilentHill Creator"
+  },
     {
     "file":"galib.json",
      "subname": "Mirza Galib"
