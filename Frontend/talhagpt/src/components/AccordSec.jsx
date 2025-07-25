@@ -1,6 +1,10 @@
  import React,{useRef,useEffect} from 'react'
  import { useSelector } from 'react-redux';
- 
+ import { TrashIcon } from '@heroicons/react/16/solid';
+ import MessageModal from './ConfirmModal';
+import ConfirmModal from './ConfirmModal';
+import { useDispatch } from 'react-redux';
+import { exit,enter } from '../Redux/mouseSlice';
  export const AccordSec = ({
     selectedModel,
     setSelectedModel,
@@ -20,12 +24,14 @@
     setTemperature
 
  }) => {
+    let dispatch=useDispatch()
     const checkboxRef = useRef(null);
- 
+    const cmr=useRef(null)
   const MouseIn=useSelector(state=>state.mouseenter.value)
     useEffect(() => {
     if (MouseIn && checkboxRef.current) {
       checkboxRef.current.checked = false;
+      dispatch(exit())
     }
   }, [MouseIn]);
    return (
@@ -126,7 +132,10 @@
                     >
                       ⚙️ Chains
                     </label>
-                  </div>
+                    <button  className="btn btn-sm btn-primary shrink-0 w-full"  onClick={()=> document.getElementById("del_chat_modal").showModal()}  >
+                      <TrashIcon width={22} height={22} /> 
+                    </button>
+                  </div>  
                 </div>
               </div>
             </div>
@@ -216,8 +225,13 @@
               >
                 ⚙️ Chains
               </label>
+               <button  className="btn btn-sm btn-primary shrink-0 " onClick={()=>{
+                document.getElementById("del_chat_modal").showModal()
+               }}>
+                    <TrashIcon width={22} height={22} />
+                    </button>
             </div>
-
+                  <ConfirmModal id='del_chat_modal'  message='Are you sure you want to delete all chat history' title='Delete Chat History'  onConfirm={()=>{setChatHistory([])}} />
                  {/* Original layout for larger screens end */}
       </>
    )

@@ -2,6 +2,7 @@ import React from "react";
 import { enter, exit } from "../Redux/mouseSlice";
 import { useDispatch } from "react-redux";
 import { useSelector } from "react-redux";
+import { PaperAirplaneIcon } from "@heroicons/react/16/solid";
 export const TextInputBox = ({ setPrompt, handleSubmit, prompt }) => {
   let dispatch = useDispatch();
   const loading = useSelector((state) => state.mouseenter.loading); // ✅ CORRECT
@@ -23,14 +24,12 @@ export const TextInputBox = ({ setPrompt, handleSubmit, prompt }) => {
           }}
         />
         <button
-          onMouseEnter={() => {
-            dispatch(exit());
-          }}
+           onMouseEnter={() => dispatch(enter())}
           className="btn btn-sm btn-primary shrink-0 "
           onClick={handleSubmit}
           disabled={loading}
         >
-          {loading ? <span className="loading loading-spinner" /> : "Send"}
+          {loading ? <span className="loading loading-spinner" /> : <PaperAirplaneIcon width={22} height={33}/>}
         </button>
       </div>
     </>

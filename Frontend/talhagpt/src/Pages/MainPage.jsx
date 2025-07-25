@@ -6,7 +6,7 @@ import { TextInputBox } from "../components/TextInputBox";
 import { AccordSec } from "../components/AccordSec";
 import ChainModal from "../components/chainModal";
 import { useDispatch } from "react-redux";
-import { startLoading, stopLoading } from "../Redux/mouseSlice";
+import { startLoading, stopLoading,exit } from "../Redux/mouseSlice";
 const API_BASE_URL = import.meta.env.VITE_API_ENDPOINT;
 
 const MainPage = () => {
@@ -231,7 +231,7 @@ useEffect(() => {
   return (
     <>
       <div className=" min-h-screen bg-gradient-to-br from-gray-950 to-gray-900 text-white font-sans flex flex-col">
-        <div className="max-w-4xl mx-auto px-4 py-6 w-full flex flex-col flex-grow mt-[30px] ">
+        <div className="max-w-4xl mx-auto px-4 py-6 w-full flex flex-col flex-grow mt-[30px]  " >
           <ChatWindow
             Mode={Mode}
             sref={sref}
