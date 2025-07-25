@@ -39,10 +39,10 @@ import { exit,enter } from '../Redux/mouseSlice';
       
             {/* Accordion for small screens */}
 
-            <div className="block sm:hidden w-full">
+            <div className="block sm:hidden w-full"  title='Other options like select model role etc'>
               <div  className="collapse collapse-arrow bg-gray-800/90 text-white rounded-lg border border-gray-700">
                 <input type="checkbox" ref={checkboxRef}  />
-                <div className="collapse-title text-lg font-medium"  >
+                <div className="collapse-title text-lg font-medium" >
                   ⚙️ Options
                 </div>
                 <div className="collapse-content bg-gray-900/90 p-2 rounded-b-lg">
@@ -52,7 +52,7 @@ import { exit,enter } from '../Redux/mouseSlice';
                       value={selectedModel}
                       onChange={(e) => setSelectedModel(e.target.value)}
                     >
-                      <option disabled value="">
+                      <option disabled value="" title='Model name you want to chosoe'>
                         Model
                       </option>
                       {models.map((v, i) => (
@@ -90,10 +90,11 @@ import { exit,enter } from '../Redux/mouseSlice';
                         setChatHistory([]);
                         setChains({});
                       }}
-                    >
-                      <option disabled value="">
-                        Character
-                      </option>
+                    > 
+                    
+                <option value="">No Character</option>  
+
+                      
                       {characters.map((c) => (
                         <option key={c}>{c}</option>
                       ))}
@@ -187,7 +188,7 @@ import { exit,enter } from '../Redux/mouseSlice';
                   setChains({});
                 }}
               >
-                <option disabled value="">
+                <option  value="">
                   Character
                 </option>
                 {characters.map((c) => (
