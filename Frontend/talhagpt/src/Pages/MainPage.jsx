@@ -243,7 +243,7 @@ const MainPage = () => {
             chatEndRef={chatEndRef}
           />
 
-          <div className="sticky bottom-0  z-10 py-4">
+          <div className="sticky bottom-0  z-10 py-0">
             <div className="bg-gray-800/70 p-4 rounded-2xl space-y-3">
               {/* Message input and Send button (Same row) */}
 
