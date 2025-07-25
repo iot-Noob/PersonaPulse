@@ -7,7 +7,7 @@ const ChatWindow = ({ chatHistory, sref, Mode, chatEndRef }) => {
     <>
       <div className="flex-1 w-full h-full">
         <div
-          className="h-[calc(100vh-200px)] overflow-y-auto pr-2 space-y-4"
+          className="flex-1 overflow-y-auto space-y-4"
           style={{
             scrollbarWidth: "thin",
             scrollbarColor: "#888 transparent",

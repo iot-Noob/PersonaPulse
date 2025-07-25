@@ -4,7 +4,7 @@ const MainRoutes = lazy(() => import("./MianRoutes"));
 const RouteSlicer = () => {
   return (
     <>
-      <div className="">
+      <div className="overflow-x-hidden">
         <SuspenseSlice>
           <MainRoutes />
         </SuspenseSlice>

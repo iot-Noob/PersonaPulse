@@ -235,7 +235,7 @@ const MainPage = () => {
   return (
     <>
       <div className=" min-h-screen bg-gradient-to-br from-gray-950 to-gray-900 text-white font-sans flex flex-col">
-        <div className="max-w-4xl mx-auto px-4 py-6 w-full flex flex-col flex-grow mt-[30px]  ">
+        <div className="w-full max-w-4xl xl:max-w-6xl 2xl:max-w-[60%] mx-auto px-4 py-6 flex flex-col flex-grow mt-[50px]">
           <ChatWindow
             Mode={Mode}
             sref={sref}
