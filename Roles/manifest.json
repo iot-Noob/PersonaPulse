@@ -24,7 +24,10 @@
       "file": "prmopt_corrector.json",
       "subname": "Prompt Correct"
     },
- 
+      {
+      "file": "DoomDevelopers.json",
+      "subname": "Doom Devs ID Software"
+    },
     {
       "file": "putin.json",
       "subname": "Valadmir Putin"

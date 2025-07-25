@@ -44,17 +44,22 @@ const MainPage = () => {
         const [modelsRes, rolesRes, charactersRes] = await Promise.all([
           axios.get(`${API_BASE_URL}/get_model`),
           axios.get(`${API_BASE_URL}/get_role`),
-          axios.get(`${API_BASE_URL}/characters`)
+          axios.get(`${API_BASE_URL}/characters`),
         ]);
 
-        const sortedModels = (modelsRes?.data?.models || []).sort((a, b) => a.localeCompare(b));
-        const sortedRoles = (rolesRes?.data?.Roles || []).sort((a, b) => a.localeCompare(b));
-        const sortedCharacters = (charactersRes?.data?.characters || []).sort((a, b) => a.localeCompare(b));
+        const sortedModels = (modelsRes?.data?.models || []).sort((a, b) =>
+          a.localeCompare(b)
+        );
+        const sortedRoles = (rolesRes?.data?.Roles || []).sort((a, b) =>
+          a.localeCompare(b)
+        );
+        const sortedCharacters = (charactersRes?.data?.characters || []).sort(
+          (a, b) => a.localeCompare(b)
+        );
 
         setModels(sortedModels);
         setRoles(sortedRoles);
         setCharacters(sortedCharacters);
-
       } catch (err) {
         console.error("❌ Error fetching data:", err);
       }
@@ -230,7 +235,7 @@ const MainPage = () => {
   return (
     <>
       <div className=" min-h-screen bg-gradient-to-br from-gray-950 to-gray-900 text-white font-sans flex flex-col">
-        <div className="max-w-4xl mx-auto px-4 py-6 w-full flex flex-col flex-grow mt-[30px]  " >
+        <div className="max-w-4xl mx-auto px-4 py-6 w-full flex flex-col flex-grow mt-[30px]  ">
           <ChatWindow
             Mode={Mode}
             sref={sref}

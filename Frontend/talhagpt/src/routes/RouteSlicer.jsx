@@ -1,14 +1,16 @@
-import React from 'react'
-import MainRoutes from './MianRoutes'
-
+import React, { lazy } from "react";
+import SuspenseSlice from "../components/SuspenseSlice";
+const MainRoutes = lazy(() => import("./MianRoutes"));
 const RouteSlicer = () => {
   return (
     <>
-    <div className=''>
-    <MainRoutes/>
-    </div>
+      <div className="">
+        <SuspenseSlice>
+          <MainRoutes />
+        </SuspenseSlice>
+      </div>
     </>
-  )
-}
+  );
+};
 
-export default RouteSlicer
+export default RouteSlicer;
