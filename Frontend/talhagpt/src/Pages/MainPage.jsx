@@ -1,12 +1,11 @@
 import React, { useEffect, useState, useRef } from "react";
 import axios from "axios";
-
 import ChatWindow from "../components/ChatWindow";
 import { TextInputBox } from "../components/TextInputBox";
 import { AccordSec } from "../components/AccordSec";
 import ChainModal from "../components/chainModal";
 import { useDispatch } from "react-redux";
-import { startLoading, stopLoading,exit } from "../Redux/mouseSlice";
+import { startLoading, stopLoading, exit } from "../Redux/mouseSlice";
 const API_BASE_URL = import.meta.env.VITE_API_ENDPOINT;
 
 const MainPage = () => {
@@ -39,30 +38,30 @@ const MainPage = () => {
     localStorage.setItem("chatHistory", JSON.stringify(chatHistory));
   }, [chatHistory]);
 
-useEffect(() => {
-  const fetchData = async () => {
-    try {
-      const [modelsRes, rolesRes, charactersRes] = await Promise.all([
-        axios.get(`${API_BASE_URL}/get_model`),
-        axios.get(`${API_BASE_URL}/get_role`),
-        axios.get(`${API_BASE_URL}/characters`)
-      ]);
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const [modelsRes, rolesRes, charactersRes] = await Promise.all([
+          axios.get(`${API_BASE_URL}/get_model`),
+          axios.get(`${API_BASE_URL}/get_role`),
+          axios.get(`${API_BASE_URL}/characters`)
+        ]);
 
-      const sortedModels = (modelsRes?.data?.models || []).sort((a, b) => a.localeCompare(b));
-      const sortedRoles = (rolesRes?.data?.Roles || []).sort((a, b) => a.localeCompare(b));
-      const sortedCharacters = (charactersRes?.data?.characters || []).sort((a, b) => a.localeCompare(b));
+        const sortedModels = (modelsRes?.data?.models || []).sort((a, b) => a.localeCompare(b));
+        const sortedRoles = (rolesRes?.data?.Roles || []).sort((a, b) => a.localeCompare(b));
+        const sortedCharacters = (charactersRes?.data?.characters || []).sort((a, b) => a.localeCompare(b));
 
-      setModels(sortedModels);
-      setRoles(sortedRoles);
-      setCharacters(sortedCharacters);
+        setModels(sortedModels);
+        setRoles(sortedRoles);
+        setCharacters(sortedCharacters);
 
-    } catch (err) {
-      console.error("❌ Error fetching data:", err);
-    }
-  };
+      } catch (err) {
+        console.error("❌ Error fetching data:", err);
+      }
+    };
 
-  fetchData();
-}, []);
+    fetchData();
+  }, []);
 
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: "smooth" });

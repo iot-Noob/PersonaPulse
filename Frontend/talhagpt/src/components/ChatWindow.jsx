@@ -1,6 +1,7 @@
-import React from "react";
-import MarkdownMessage from "./MarkdownMessage";
-import EChartsRenderer from "./EChartsRenderer";
+import React, { lazy  } from "react";
+const MarkdownMessage = lazy(() => import("./MarkdownMessage"));
+const EChartsRenderer = lazy(() => import("./EChartsRenderer"));
+import SuspenseSlice from "./SuspenseSlice";
 const ChatWindow = ({ chatHistory, sref, Mode, chatEndRef }) => {
   return (
     <>
@@ -22,15 +23,19 @@ const ChatWindow = ({ chatHistory, sref, Mode, chatEndRef }) => {
               </div>
               <div className="chat chat-start" ref={sref}>
                 <div className="chat-bubble bg-primary text-white text-sm max-w-[80vw] sm:max-w-xl">
-                  <MarkdownMessage
+                 <SuspenseSlice>
+                   <MarkdownMessage
                     content={Mode === "Prompt" ? chat.bot : chat.bot?.message}
                     key={`msg-${index}`}
                   />
+                 </SuspenseSlice>
                   {Mode === "Analytical" && typeof chat.bot === "object" && (
-                    <EChartsRenderer
-                      option={chat.bot.echartsOption}
-                      key={`chart-${index}`}
-                    />
+                    <SuspenseSlice>
+                      <EChartsRenderer
+                        option={chat.bot.echartsOption}
+                        key={`chart-${index}`}
+                      />
+                    </SuspenseSlice>
                   )}
                 </div>
               </div>
