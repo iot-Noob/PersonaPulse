@@ -1,5 +1,7 @@
 import React from "react";
-
+import { LinkIcon, TrashIcon } from "@heroicons/react/16/solid";
+import ConfirmModal from "./ConfirmModal";
+ 
 const ChainModal = ({
   chains,
   setError,
@@ -65,6 +67,7 @@ const ChainModal = ({
                         className="flex items-center gap-2 bg-gray-700 rounded-lg px-2 py-1 hover:bg-gray-600"
                       >
                         <select
+                        title="role you want to send prompt as user system assistant"
                           className="select select-xs bg-gray-800/80 text-white border-none w-24"
                           value={item.role}
                           onChange={(e) =>
@@ -76,7 +79,7 @@ const ChainModal = ({
                             )
                           }
                         >
-                          <option disabled value="">
+                          <option disabled value="" title="role" >
                             Role
                           </option>
                           {roles.map((r) => (
@@ -106,6 +109,7 @@ const ChainModal = ({
                           />
                         )}
                         <input
+                        title="enter your chain prompt"
                           className="input input-sm bg-gray-800 text-white placeholder-gray-400 rounded-xl w-full focus:outline-none focus:ring-2 focus:ring-primary"
                           value={item.prompt}
                           onChange={(e) =>
@@ -126,12 +130,20 @@ const ChainModal = ({
             })}
           </div>
           <div className="mt-4">
-            <button onClick={addNewChain} className="btn btn-sm btn-accent">
-              ➕ Add Chain
+            <button onClick={addNewChain} className="btn btn-sm btn-accent" title="Add Chain"> 
+              <LinkIcon width={20}/>
+          
+            </button>
+              <button  className="btn btn-sm btn-error ml-2" onClick={()=>document.getElementById("dcm").showModal()} title="remove all chains">
+              <TrashIcon width={20}/>
             </button>
           </div>
         </div>
       </div>
+      <ConfirmModal message="Do you want to delete all chains" id="dcm" title="Delete Chains" onConfirm={()=>{
+              setChains({});
+      
+      }}/>
     </>
   );
 };

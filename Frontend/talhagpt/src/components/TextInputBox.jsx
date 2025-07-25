@@ -11,6 +11,7 @@ export const TextInputBox = ({ setPrompt, handleSubmit, prompt }) => {
     <>
       <div className="flex flex-col sm:flex-row gap-2">
         <textarea
+          title="Enter your mani prompt"
           onMouseEnter={() => dispatch(enter())}
           onMouseLeave={() => dispatch(exit())}
           placeholder="Type your message..."
@@ -24,6 +25,7 @@ export const TextInputBox = ({ setPrompt, handleSubmit, prompt }) => {
           }}
         />
         <button
+        title="Send prmopt"   
            onMouseEnter={() => dispatch(enter())}
           className="btn btn-sm btn-primary shrink-0 "
           onClick={handleSubmit}

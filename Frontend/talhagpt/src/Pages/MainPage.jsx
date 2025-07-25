@@ -24,7 +24,7 @@ const MainPage = () => {
   const [chains, setChains] = useState({});
   const [selectedChain, setSelectedChain] = useState(null);
   const [chatHistory, setChatHistory] = useState([]);
-  const [temperature, setTemperature] = useState(0.0);
+  const [temperature, setTemperature] = useState(0.2);
   const [Mode, setMode] = useState("Prompt");
   const all_mode = ["Analytical", "Prompt"];
   const chatEndRef = useRef(null);
