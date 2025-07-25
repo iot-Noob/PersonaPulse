@@ -1,4 +1,5 @@
- import React from 'react'
+ import React,{useRef,useEffect} from 'react'
+ import { useSelector } from 'react-redux';
  
  export const AccordSec = ({
     selectedModel,
@@ -19,15 +20,23 @@
     setTemperature
 
  }) => {
+    const checkboxRef = useRef(null);
+ 
+  const MouseIn=useSelector(state=>state.mouseenter.value)
+    useEffect(() => {
+    if (MouseIn && checkboxRef.current) {
+      checkboxRef.current.checked = false;
+    }
+  }, [MouseIn]);
    return (
       <>
       
             {/* Accordion for small screens */}
 
             <div className="block sm:hidden w-full">
-              <div className="collapse collapse-arrow bg-gray-800/90 text-white rounded-lg border border-gray-700">
-                <input type="checkbox" />
-                <div className="collapse-title text-lg font-medium">
+              <div  className="collapse collapse-arrow bg-gray-800/90 text-white rounded-lg border border-gray-700">
+                <input type="checkbox" ref={checkboxRef}  />
+                <div className="collapse-title text-lg font-medium"  >
                   ⚙️ Options
                 </div>
                 <div className="collapse-content bg-gray-900/90 p-2 rounded-b-lg">

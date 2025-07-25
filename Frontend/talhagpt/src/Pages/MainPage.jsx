@@ -5,10 +5,13 @@ import ChatWindow from "../components/ChatWindow";
 import { TextInputBox } from "../components/TextInputBox";
 import { AccordSec } from "../components/AccordSec";
 import ChainModal from "../components/chainModal";
-
+import { useDispatch } from "react-redux";
+import { startLoading, stopLoading } from "../Redux/mouseSlice";
 const API_BASE_URL = import.meta.env.VITE_API_ENDPOINT;
 
 const MainPage = () => {
+  const dispatch = useDispatch();
+
   const [models, setModels] = useState([]);
   const [roles, setRoles] = useState([]);
   const [characters, setCharacters] = useState([]);
@@ -17,11 +20,9 @@ const MainPage = () => {
   const [selectedCharacter, setSelectedCharacter] = useState("");
   const [prompt, setPrompt] = useState("");
   const [response, setResponse] = useState("");
-  const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [chains, setChains] = useState({});
   const [selectedChain, setSelectedChain] = useState(null);
-  const [newChainName, setNewChainName] = useState("");
   const [chatHistory, setChatHistory] = useState([]);
   const [temperature, setTemperature] = useState(0.0);
   const [Mode, setMode] = useState("Prompt");
@@ -38,24 +39,30 @@ const MainPage = () => {
     localStorage.setItem("chatHistory", JSON.stringify(chatHistory));
   }, [chatHistory]);
 
-  useEffect(() => {
+useEffect(() => {
+  const fetchData = async () => {
     try {
-      axios
-        .get(`${API_BASE_URL}/get_model`)
-        .then((res) => setModels(res?.data?.models))
-        .catch(console.error);
-      axios
-        .get(`${API_BASE_URL}/get_role`)
-        .then((res) => setRoles(res?.data?.Roles))
-        .catch(console.error);
-      axios
-        .get(`${API_BASE_URL}/characters`)
-        .then((res) => setCharacters(res?.data?.characters))
-        .catch(console.error);
+      const [modelsRes, rolesRes, charactersRes] = await Promise.all([
+        axios.get(`${API_BASE_URL}/get_model`),
+        axios.get(`${API_BASE_URL}/get_role`),
+        axios.get(`${API_BASE_URL}/characters`)
+      ]);
+
+      const sortedModels = (modelsRes?.data?.models || []).sort((a, b) => a.localeCompare(b));
+      const sortedRoles = (rolesRes?.data?.Roles || []).sort((a, b) => a.localeCompare(b));
+      const sortedCharacters = (charactersRes?.data?.characters || []).sort((a, b) => a.localeCompare(b));
+
+      setModels(sortedModels);
+      setRoles(sortedRoles);
+      setCharacters(sortedCharacters);
+
     } catch (err) {
-      console.error(`Error occur fetch data due to `,err);
+      console.error("❌ Error fetching data:", err);
     }
-  }, []);
+  };
+
+  fetchData();
+}, []);
 
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -68,7 +75,7 @@ const MainPage = () => {
       return;
     }
 
-    setLoading(true);
+    dispatch(startLoading());
     setError("");
 
     try {
@@ -177,7 +184,7 @@ const MainPage = () => {
       console.error("API error:", err);
       setError("Failed to fetch response");
     } finally {
-      setLoading(false);
+      dispatch(stopLoading());
     }
   };
 
@@ -239,7 +246,6 @@ const MainPage = () => {
               <TextInputBox
                 setPrompt={setPrompt}
                 handleSubmit={handleSubmit}
-                loading={loading}
                 prompt={prompt}
               />
 
