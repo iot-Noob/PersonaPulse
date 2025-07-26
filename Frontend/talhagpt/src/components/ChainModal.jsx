@@ -25,14 +25,14 @@ const ChainModal = ({
               ✕
             </label>
           </div>
-          <div className="flex flex-col sm:flex-row sm:flex-wrap gap-4">
+          <div className="space-y-4 max-h-[30vh] overflow-y-auto pr-1">
             {Object.entries(chains).map(([chainName, chainData]) => {
               const items = chainData.items;
               const temp = chainData.temperature;
               return (
                 <div
                   key={chainName}
-                  className="flex flex-col sm:flex-row sm:flex-wrap gap-4"
+                  className="space-y-4 max-h-[30vh] overflow-y-auto pr-1"
                 >
                   {/* Chain Header: Name + Delete */}
                   <div className="flex justify-between items-center">
