@@ -232,6 +232,45 @@ const MainPage = () => {
     if (selectedChain === chainName) setSelectedChain(null);
   };
 
+  let saveTimer = null;
+
+  const debounce_save = (settings, ti = 500) => {
+    if (saveTimer) clearTimeout(saveTimer);
+
+    saveTimer = setTimeout(() => {
+      try {
+        localStorage.setItem("app:settings", JSON.stringify(settings));
+        console.log("✅ Debounced settings saved");
+      } catch (err) {
+        console.error("❌ Failed to save settings:", err);
+      }
+    }, ti);
+  };
+  useEffect(() => {
+    const settings = {
+      selectedModel,
+      selectedRole,
+      selectedCharacter,
+      chains,
+      Mode,
+    };
+    debounce_save(settings); // saves after 500ms of no changes
+  }, [selectedModel, selectedRole, selectedCharacter, chains, Mode]);
+useEffect(() => {
+  try {
+    const savedSettings = JSON.parse(localStorage.getItem("app:settings"));
+    if (savedSettings) {
+      if (savedSettings.selectedModel) setSelectedModel(savedSettings.selectedModel);
+      if (savedSettings.selectedRole) setSelectedRole(savedSettings.selectedRole);
+      if (savedSettings.selectedCharacter) setSelectedCharacter(savedSettings.selectedCharacter);
+      if (savedSettings.chains) setChains(savedSettings.chains);
+      if (savedSettings.Mode) setMode(savedSettings.Mode);
+    }
+  } catch (err) {
+    console.error("❌ Failed to load saved settings:", err);
+  }
+}, []);
+
   return (
     <>
       <div className=" min-h-screen bg-gradient-to-br from-gray-950 to-gray-900 text-white font-sans flex flex-col overflow-x-hidden">
@@ -267,6 +306,7 @@ const MainPage = () => {
                 selectedCharacter={selectedCharacter}
                 setSelectedCharacter={setSelectedCharacter}
                 characters={characters}
+                setSelectedRole={setSelectedRole}
                 selectedRole={selectedRole}
                 roles={roles}
                 temperature={temperature}
