@@ -93,6 +93,15 @@
    {
     "file":"IslamicDream.json",
      "subname": "Khawab ki tabeer (Islamic)"
+  },
+   {
+    "file":"c++_devs.json",
+     "subname": "RitchieStroustrupBot(C++ Creator)"
+  },
+   {
+    "file":"OpenAI_Dev.json",
+     "subname": "OpenAI Developer"
   }
+ 
   ]
 }
