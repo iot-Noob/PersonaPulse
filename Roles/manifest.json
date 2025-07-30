@@ -101,7 +101,10 @@
    {
     "file":"OpenAI_Dev.json",
      "subname": "OpenAI Developer"
+  },
+    {
+    "file":"Writer.json",
+     "subname": "Professional Writer"
   }
- 
   ]
 }
