@@ -4,9 +4,13 @@ import ChatWindow from "../components/ChatWindow";
 import { TextInputBox } from "../components/TextInputBox";
 import { AccordSec } from "../components/AccordSec";
 import ChainModal from "../components/chainModal";
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { startLoading, stopLoading, exit } from "../Redux/mouseSlice";
+import { getAiModels, setSettings, api_data } from "../Redux/dataSlice";
+import { toast } from "react-toastify";
+
 const API_BASE_URL = import.meta.env.VITE_API_ENDPOINT;
+const AI_API = import.meta.env.VITE_API_AI;
 
 const MainPage = () => {
   const dispatch = useDispatch();
@@ -28,23 +32,33 @@ const MainPage = () => {
   const all_mode = ["Analytical", "Prompt"];
   const chatEndRef = useRef(null);
   const sref = useRef(null);
+  const loadedRef = useRef(false);
+
   useEffect(() => {
-    const savedHistory = localStorage.getItem("chatHistory");
-    if (savedHistory) {
-      setChatHistory(JSON.parse(savedHistory));
+    if (!loadedRef.current) {
+      const saved = localStorage.getItem("chatHistory");
+      if (saved) {
+        setChatHistory(JSON.parse(saved));
+      }
+      loadedRef.current = true;
     }
   }, []);
   useEffect(() => {
-    localStorage.setItem("chatHistory", JSON.stringify(chatHistory));
+    const timer = setTimeout(() => {
+      localStorage.setItem("chatHistory", JSON.stringify(chatHistory));
+    }, 300);
+
+    return () => clearTimeout(timer);
   }, [chatHistory]);
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [modelsRes, rolesRes, charactersRes] = await Promise.all([
+        const [modelsRes, rolesRes, charactersRes, Ai] = await Promise.all([
           axios.get(`${API_BASE_URL}/get_model`),
           axios.get(`${API_BASE_URL}/get_role`),
           axios.get(`${API_BASE_URL}/characters`),
+          axios.get(`${AI_API}/models`),
         ]);
 
         const sortedModels = (modelsRes?.data?.models || []).sort((a, b) =>
@@ -56,10 +70,14 @@ const MainPage = () => {
         const sortedCharacters = (charactersRes?.data?.characters || []).sort(
           (a, b) => a.localeCompare(b)
         );
+        const sortedAiModels = (Ai?.data || []).sort((a, b) =>
+          a.file_name.localeCompare(b.file_name)
+        );
 
         setModels(sortedModels);
         setRoles(sortedRoles);
         setCharacters(sortedCharacters);
+        dispatch(getAiModels(sortedAiModels));
       } catch (err) {
         console.error("❌ Error fetching data:", err);
       }
@@ -68,10 +86,14 @@ const MainPage = () => {
     fetchData();
   }, []);
 
-  useEffect(() => {
+useEffect(() => {
+  if (Mode === "Prompt") {
     chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  } else {
     sref.current?.scrollIntoView({ behavior: "smooth" });
-  }, [chatHistory]);
+  }
+}, [chatHistory, Mode]);
+
 
   const handleSubmit = async () => {
     if (!selectedModel || !selectedRole) {
@@ -240,6 +262,7 @@ const MainPage = () => {
     saveTimer = setTimeout(() => {
       try {
         localStorage.setItem("app:settings", JSON.stringify(settings));
+        dispatch(setSettings(settings));
         console.log("✅ Debounced settings saved");
       } catch (err) {
         console.error("❌ Failed to save settings:", err);
@@ -253,23 +276,36 @@ const MainPage = () => {
       selectedCharacter,
       chains,
       Mode,
+      temperature,
     };
     debounce_save(settings); // saves after 500ms of no changes
-  }, [selectedModel, selectedRole, selectedCharacter, chains, Mode]);
-useEffect(() => {
-  try {
-    const savedSettings = JSON.parse(localStorage.getItem("app:settings"));
-    if (savedSettings) {
-      if (savedSettings.selectedModel) setSelectedModel(savedSettings.selectedModel);
-      if (savedSettings.selectedRole) setSelectedRole(savedSettings.selectedRole);
-      if (savedSettings.selectedCharacter) setSelectedCharacter(savedSettings.selectedCharacter);
-      if (savedSettings.chains) setChains(savedSettings.chains);
-      if (savedSettings.Mode) setMode(savedSettings.Mode);
+  }, [
+    selectedModel,
+    selectedRole,
+    selectedCharacter,
+    chains,
+    Mode,
+    temperature,
+  ]);
+  useEffect(() => {
+    try {
+      const savedSettings = JSON.parse(localStorage.getItem("app:settings"));
+      if (savedSettings) {
+        if (savedSettings.selectedModel)
+          setSelectedModel(savedSettings.selectedModel);
+        if (savedSettings.selectedRole)
+          setSelectedRole(savedSettings.selectedRole);
+        if (savedSettings.selectedCharacter)
+          setSelectedCharacter(savedSettings.selectedCharacter);
+        if (savedSettings.chains) setChains(savedSettings.chains);
+        if (savedSettings.Mode) setMode(savedSettings.Mode);
+        if (savedSettings.temperature)
+          setTemperature(savedSettings.temperature);
+      }
+    } catch (err) {
+      console.error("❌ Failed to load saved settings:", err);
     }
-  } catch (err) {
-    console.error("❌ Failed to load saved settings:", err);
-  }
-}, []);
+  }, []);
 
   return (
     <>
@@ -314,9 +350,7 @@ useEffect(() => {
               />
             </div>
 
-            {error && (
-              <div className="alert alert-error shadow-lg mt-2">{error}</div>
-            )}
+            {error && toast.error(error)}
           </div>
 
           <ChainModal

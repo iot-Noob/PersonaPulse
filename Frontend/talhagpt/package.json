@@ -21,6 +21,7 @@
     "react-markdown": "^10.1.0",
     "react-redux": "^9.2.0",
     "react-router-dom": "^7.6.3",
+    "react-toastify": "^11.0.5",
     "react-tooltip": "^5.29.1",
     "react-type-animation": "^3.2.0",
     "redux": "^5.0.1",
