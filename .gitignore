@@ -58,3 +58,5 @@ node_modules/
 /putin_vector_db
 *.sqlite3
 *.bin
+aillm
+aillm/*

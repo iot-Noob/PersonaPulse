@@ -20,3 +20,6 @@ class ChainRequest(BaseModel):
 
 class Prompt_Input(BaseModel):
     prompt:str
+    
+class LocMod(BaseModel):
+    loc_mod:str

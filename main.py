@@ -11,7 +11,7 @@ from routes.route import route as route_router
 app = FastAPI(
     title="ChatGPT Chatbot for Specific Tasks",
     description="A chatbot for specific conversations, including chaining, logic, etc.",
-    version="1.0.0.1"
+    version="1.1.0.1"
 )
 
 # Enable CORS for all origins

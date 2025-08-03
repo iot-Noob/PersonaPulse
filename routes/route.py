@@ -1,10 +1,8 @@
-from fileinput import filename
-from re import T
- 
+from re import M
 from Models.gpt_mod import OpenAIModel
-from fastapi import APIRouter, HTTPException,Query
+from fastapi import APIRouter, HTTPException
 from fastapi.responses import JSONResponse,StreamingResponse
-from Models.main_model import ChainRequest,RoleEnum,Prompt_Input
+from Models.main_model import ChainRequest,RoleEnum,Prompt_Input,LocMod
 from Models.dyn_enum import get_character_enum
 from openai import OpenAI
 import os
@@ -13,20 +11,44 @@ from contextlib import asynccontextmanager
 import json
 from uuid import uuid4
 from typing import Optional
-
+from Helper.ModelManager import llmManager
 load_dotenv()
 base_dir = os.path.dirname(os.path.abspath(__file__))
 roles_dir = os.path.join(base_dir, "../Roles")
 manifest_path = os.path.join(roles_dir, "manifest.json")
 
 gc=get_character_enum()
-
+llm_manager=llmManager()
+llm_mfj=[{}]
 @asynccontextmanager
 async def lifespan(app: APIRouter):
     print("STARTUP: Init Groq client")
     apikey = os.getenv("API_KEY")
     global client
     global mainf  
+    global llm_models_dir
+    global llm_mfj
+    mfp=""
+    mfe=False
+    llm_models_dir=os.getenv("LLM_MODEL_PATH")
+    if not llm_models_dir or not os.path.isdir(llm_models_dir):
+        raise ValueError("Error dir path for llm model not exist")
+
+    for root, _, files in os.walk(llm_models_dir):
+        for f in files:
+            if f.endswith(".json"):
+                mfe = True
+                mfp = os.path.join(root, f)
+                break
+        if mfe:
+            break  # exit outer loop once found
+
+    if not mfe:
+        raise ValueError("❌ Manifest file (.json) not found in model path")
+    else:
+        with open(mfp,'r') as f:
+            llm_mfj=json.load(f)
+            
     if not os.path.exists(manifest_path):
         raise ValueError("Error cant load manifest file make sure poath and fiename is correct or file exist")
     with open(manifest_path, 'r', encoding='utf-8') as f:
@@ -43,9 +65,11 @@ async def lifespan(app: APIRouter):
 
     yield
     print("SHUTDOWN: Clean up resources")
-
+    llm_manager.remove_all_models()
+    
 route = APIRouter(lifespan=lifespan)
- 
+
+
 def make_echart(prompt: str, model, temperature: float):
     try:
         SYSTEM_PROMPT = """
@@ -89,7 +113,9 @@ def make_echart(prompt: str, model, temperature: float):
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error generating ECharts: {e}")
     
-    
+
+
+
 @route.post("/echarts", tags=["echart response"])
 async def get_chart(
     prmopt:Prompt_Input,
@@ -279,4 +305,42 @@ async def get_character():
                 result.append(subname)
 
     return {"characters": result}
+
+@route.post("/load_model", tags=["load-local-model"])
+async def load_local_model(mod_name: LocMod):
+    try:
+        bp = None
+        for itm in llm_mfj:
+            if mod_name.loc_mod == itm["file_name"]:
+                bp = os.path.join(llm_models_dir, itm["model_name"])
+                break
+
+        if not bp:
+            raise HTTPException(status_code=404, detail="❌ Model not found in manifest.")
+        if not llm_manager.is_loaded(bp):
+        
+            llm_manager.get_llm(bp)
+            return {"status": "✅ Model loaded", "model_path": bp}
+        else:
+            return JSONResponse("Model loaded already",200)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"❌ Error loading model: {str(e)}")
  
+@route.get("/get_aim", tags=["get_ai_model_data"])
+async def get_ai_mod():
+    glm = llm_manager.get_loaded_models()
+    ffr = []
+
+    for item in llm_mfj:
+        model_name = item["model_name"]
+        file_name = item["file_name"]
+
+        # Check if this model is currently loaded
+        is_active = any(os.path.basename(path) == model_name for path in glm)
+
+        ffr.append({
+            "file_name": file_name,
+            "activated": is_active
+        })
+
+    return ffr
