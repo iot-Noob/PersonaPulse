@@ -54,11 +54,11 @@ const MainPage = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [modelsRes, rolesRes, charactersRes, Ai] = await Promise.all([
+        const [modelsRes, rolesRes, charactersRes ] = await Promise.all([
           axios.get(`${API_BASE_URL}/get_model`),
           axios.get(`${API_BASE_URL}/get_role`),
           axios.get(`${API_BASE_URL}/characters`),
-          axios.get(`${AI_API}/models`),
+          // axios.get(`${AI_API}/models`),
         ]);
 
         const sortedModels = (modelsRes?.data?.models || []).sort((a, b) =>
@@ -70,14 +70,14 @@ const MainPage = () => {
         const sortedCharacters = (charactersRes?.data?.characters || []).sort(
           (a, b) => a.localeCompare(b)
         );
-        const sortedAiModels = (Ai?.data || []).sort((a, b) =>
-          a.file_name.localeCompare(b.file_name)
-        );
+        // const sortedAiModels = (Ai?.data || []).sort((a, b) =>
+        //   a.file_name.localeCompare(b.file_name)
+        // );
 
         setModels(sortedModels);
         setRoles(sortedRoles);
         setCharacters(sortedCharacters);
-        dispatch(getAiModels(sortedAiModels));
+        // dispatch(getAiModels(sortedAiModels));
       } catch (err) {
         console.error("❌ Error fetching data:", err);
       }
