@@ -1,5 +1,6 @@
+from ast import mod
 from re import M
-from Models.gpt_mod import OpenAIModel
+from Models.gpt_mod import OpenAIModel,ModelSelection
 from fastapi import APIRouter, HTTPException
 from fastapi.responses import JSONResponse,StreamingResponse
 from Models.main_model import ChainRequest,RoleEnum,Prompt_Input,LocMod
@@ -24,6 +25,7 @@ llm_mfj=[{}]
 async def lifespan(app: APIRouter):
     print("STARTUP: Init Groq client")
     apikey = os.getenv("API_KEY")
+    global llm_manager
     global client
     global mainf  
     global llm_models_dir
@@ -46,9 +48,9 @@ async def lifespan(app: APIRouter):
     if not mfe:
         raise ValueError("❌ Manifest file (.json) not found in model path")
     else:
-        with open(mfp,'r') as f:
-            llm_mfj=json.load(f)
-            
+ 
+        cmf=llm_manager.convert_manifest_json(mfp)
+        llm_manager=llmManager(mod_mf=cmf)
     if not os.path.exists(manifest_path):
         raise ValueError("Error cant load manifest file make sure poath and fiename is correct or file exist")
     with open(manifest_path, 'r', encoding='utf-8') as f:
@@ -83,7 +85,7 @@ def make_echart(prompt: str, model, temperature: float):
 
         messages = [
             {"role": "system", "content": SYSTEM_PROMPT},
-            {"role": "user", "content": prompt.prompt}
+            {"role": "user", "content": prompt}
         ]
 
         response = client.chat.completions.create(
@@ -124,7 +126,7 @@ async def get_chart(
     
 ):
     try:
-        res=make_echart(prmopt,model,temperature)
+        res=make_echart(prmopt.prompt,model,temperature)
         return res
     except Exception as e:
         raise HTTPException(500, f"Error occurred in ECharts generation: {str(e)}")
@@ -161,59 +163,115 @@ Your final response must strictly follow all the above rules.
 
 
 @route.post(path="/simple_prompt", tags=["Simple_prompt"])
-async def simple_prompt(role: RoleEnum, model: OpenAIModel, prompt: Prompt_Input, temperature: float = 0.3,character: Optional[gc] = None):
+async def simple_prompt(
+    cms: ModelSelection,
+    role: RoleEnum,
+    model: OpenAIModel,
+    prompt: Prompt_Input,
+    temperature: float = 0.3,
+    character: Optional[gc] = None,
+    use_local: bool = False,
+):
     try:
-      
         if not (0.0 <= temperature <= 1.0):
             raise HTTPException(status_code=400, detail="Temperature must be between 0.0 and 1.0")
 
-        messages = [
-            {
-                "role":"system",
-                "content":DEFAULT_SYSTEM_PROMPT
-            },
-            {
-                "role": role.value,  # Convert enum to string
-                "content": prompt.prompt,
-          
-            }
-        ]
-        if role.value == "tool":
-            messages[0]["tool_call_id"] = str(uuid4())
-        msg2=[]
-        if character is None:
+        system_msg = {"role": "system", "content": DEFAULT_SYSTEM_PROMPT}
+        user_msg = {"role": role.value, "content": prompt.prompt}
 
-            res = client.chat.completions.create(
-                model=model.value,
-                messages=messages,
-                temperature=temperature,
-            )
+        if role.value == "tool":
+            tool_id = str(uuid4())
+            system_msg["tool_call_id"] = tool_id
+            user_msg["tool_call_id"] = tool_id
+
+        # ✅ Use local model
+        if use_local:
+            try:
+                model_name = cms.local_model
+                if not llm_manager.is_loaded(model_name):
+                    raise HTTPException(404, detail="Requested model is not loaded in local cache")
+
+                if character is None:
+                    result = llm_manager.chat(
+                        model_name=model_name,
+                        prompt=prompt.prompt,
+                        temperature=temperature,
+                        max_tokens=256
+                    )
+                else:
+                    persona_prompt = None
+                    for k, v in mainf.items():
+                        for va in v:
+                            if va["subname"] == character.value:
+                                bpa = os.path.join(roles_dir, va["file"])
+                                if not os.path.exists(bpa):
+                                    raise HTTPException(404, "Persona file not found")
+
+                                with open(bpa, 'r', encoding='utf-8') as f:
+                                    persona = json.load(f)
+
+                                persona_prompt = persona["content"] if isinstance(persona, dict) else persona
+
+                    if not persona_prompt:
+                        raise HTTPException(404, detail="Persona not found")
+
+                    # You can modify this if your LLM expects full message chain instead
+                    combined_prompt = f"{persona_prompt.strip()}\n\n{prompt.prompt.strip()}"
+                    result = llm_manager.chat(
+                        model_name=model_name,
+                        prompt=combined_prompt,
+                        temperature=temperature,
+                        max_tokens=256
+                    )
+
+                return {
+                    "response": result,
+                    "model": model_name,
+                    "role": role.value
+                }
+
+            except Exception as e:
+                raise HTTPException(500, detail=f"Error getting response from local model: {e}")
+
+        # ✅ Use cloud (OpenAI/Groq)
+        msg_chain = []
+
+        if character is None:
+            msg_chain = [system_msg, user_msg]
         else:
-            for k,v in mainf.items():
+            persona_found = False
+            for k, v in mainf.items():
                 for va in v:
-                    if va["subname"]==character.value:
-                        bpa=os.path.join(roles_dir,va["file"])
-                        if os.path.exists(bpa):
-                            with open(bpa,'r',encoding='utf-8') as f:
-                              persona:dict=json.load(f)
-                            msg2.append(persona)
-                            msg2.append({"role":role.value,"content":prompt.prompt,"tool_call_id":str(uuid4())})
-                           
-                            res = client.chat.completions.create(
-                                model=model.value,
-                                messages=msg2,
-                                temperature=temperature,
-                               
-                            )
-                        else:
-                            raise HTTPException(404,"Path invalid")
+                    if va["subname"] == character.value:
+                        bpa = os.path.join(roles_dir, va["file"])
+                        if not os.path.exists(bpa):
+                            raise HTTPException(404, "Persona file not found")
+
+                        with open(bpa, 'r', encoding='utf-8') as f:
+                            persona = json.load(f)
+
+                        msg_chain = [persona, user_msg]
+                        persona_found = True
+                        break
+                if persona_found:
+                    break
+
+            if not persona_found:
+                raise HTTPException(404, detail="Persona character not found")
+
+        res = client.chat.completions.create(
+            model=model.value,
+            messages=msg_chain,
+            temperature=temperature
+        )
+
         if not res:
-            raise JSONResponse("No response",200)
-         
+            raise HTTPException(status_code=500, detail="No response from cloud LLM")
+
         return {
             "response": res.choices[0].message.content,
-            "model": model,
-            "role": role
+            "model": model.value,
+            "role": role.value
         }
 
     except Exception as e:
@@ -309,38 +367,26 @@ async def get_character():
 @route.post("/load_model", tags=["load-local-model"])
 async def load_local_model(mod_name: LocMod):
     try:
-        bp = None
-        for itm in llm_mfj:
-            if mod_name.loc_mod == itm["file_name"]:
-                bp = os.path.join(llm_models_dir, itm["model_name"])
-                break
 
-        if not bp:
-            raise HTTPException(status_code=404, detail="❌ Model not found in manifest.")
-        if not llm_manager.is_loaded(bp):
+        if not llm_manager.is_loaded(mod_name.loc_mod):
         
-            llm_manager.get_llm(bp)
-            return {"status": "✅ Model loaded", "model_path": bp}
+            llm_manager.get_llm(model_name=mod_name.loc_mod)
+            return {"status": "✅ Model loaded", "model_path":mod_name.loc_mod}
         else:
             return JSONResponse("Model loaded already",200)
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"❌ Error loading model: {str(e)}")
- 
+    
 @route.get("/get_aim", tags=["get_ai_model_data"])
 async def get_ai_mod():
-    glm = llm_manager.get_loaded_models()
+    glm = llm_manager.get_loaded_models()  # returns list of loaded models
+    loaded_names = {item["model_name"] for item in glm}  # for quick lookup
+
     ffr = []
-
-    for item in llm_mfj:
-        model_name = item["model_name"]
-        file_name = item["file_name"]
-
-        # Check if this model is currently loaded
-        is_active = any(os.path.basename(path) == model_name for path in glm)
-
+    for model_name, file_path in llm_manager.mod_mainifest_file.items():
         ffr.append({
-            "file_name": file_name,
-            "activated": is_active
+            "model_name": model_name,
+            "activated": model_name in loaded_names
         })
 
     return ffr

@@ -1,55 +1,76 @@
 from llama_cpp import Llama
 from threading import Lock
 import gc
-from Helper.SysPrompt import messages, SYSTEM
 import time
 from collections import defaultdict
+from Helper.SysPrompt import messages, SYSTEM
+import os
+import json
 class llmManager:
-    def __init__(self, thread=6, nctx=4096, batch=64):
-        self._model_locks = defaultdict(Lock)
-        self._cache_lock = Lock()  # ✅ Add this line
-        self._llm_cache = {}  # {model_path: Llama instance}
+    def __init__(self, thread=6, nctx=4096, batch=64,mod_mf:dict={}):
+        self._model_locks = defaultdict(Lock)  # now keyed by model_name
+        self._cache_lock = Lock()
+        self._llm_cache = {}  # {model_name: {"model": Llama, "last_used": time, "path": str}}
         self.n_thread = thread
         self.n_ctx = nctx
         self.batch = batch
-
-    def get_llm(self, model_path: str, chat_format: str = "chatml") -> Llama:
-        model_lock = self._model_locks[model_path]
+        self.mod_mainifest_file:dict=mod_mf
+    def get_llm(self, model_name: str, chat_format: str = "chatml") -> Llama:
+        model_lock = self._model_locks[model_name]
         with model_lock:
-            if model_path in self._llm_cache:
-                self._llm_cache[model_path]["last_used"] = time.time()
-                return self._llm_cache[model_path]["model"]
-            if self._llm_cache:
-                if model_path not in self._llm_cache:
-                    self.remove_all_models()
-                    gc.collect()
-            model = Llama(
-                model_path=model_path,
-                n_threads=self.n_thread,
-                n_ctx=self.n_ctx,
-                n_batch=self.batch,
-                chat_format=chat_format,
-                use_mmap=True,
-                use_mlock=False,
-                n_gpu_layers=0,
-                vocab_only=False,
-                verbose=False
-            )
-            self._llm_cache[model_path] = {
-                "model": model,
-                "last_used": time.time()
-            }
+            if model_name in self._llm_cache:
+                self._llm_cache[model_name]["last_used"] = time.time()
+                return self._llm_cache[model_name]["model"]
+            # Get model path from manifest
+            if model_name not in self.mod_mainifest_file:
+                raise ValueError(f"❌ Model name '{model_name}' not found in manifest.")
+            model_path = self.mod_mainifest_file[model_name]
+            # Clear previous models before loading new one
+            self.remove_all_models()
+            gc.collect()
+            try:
+                model = Llama(
+                    model_path=model_path,
+                    n_threads=self.n_thread,
+                    n_ctx=self.n_ctx,
+                    n_batch=self.batch,
+                    chat_format=chat_format,
+                    use_mmap=True,
+                    use_mlock=False,
+                    n_gpu_layers=0,
+                    vocab_only=False,
+                    verbose=False
+                )
+            except Exception as e:
+                raise RuntimeError(f"Failed to load model from {model_path}: {e}")
+
+            with self._cache_lock:
+                self._llm_cache[model_name] = {
+                    "model": model,
+                    "last_used": time.time(),
+                    "model_path": model_path
+                }
+
             print(f"✅ Loaded model: {model_path}")
             return model
-    def stream_chat(self, model_path, prompt, max_tokens=256, temperature=0.2, top_p=0.9, top_k=50):
-        try:
-            if model_path not in self._llm_cache:
-                self.get_llm(model_path)  # Re-load if evicted
-            self._llm_cache[model_path]["last_used"] = time.time()
-            model = self._llm_cache[model_path]["model"]
 
-            # Determine format (chat vs prompt)
-            if "mistral" in model_path.lower() or "openhermes" in model_path.lower():
+
+    def stream_chat(self, model_name: str, prompt, max_tokens=256, temperature=0.2, top_p=0.9, top_k=50):
+        try:
+            if model_name not in self._llm_cache:
+                raise ValueError("❌ Model not loaded or name is invalid")
+
+            self._llm_cache[model_name]["last_used"] = time.time()
+            model = self._llm_cache[model_name]["model"]
+
+            # 🔧 Correctly use dict-based manifest
+            if model_name not in self.mod_mainifest_file:
+                raise ValueError(f"❌ Model name '{model_name}' not found in manifest.")
+            model_filename = self.mod_mainifest_file[model_name].lower()
+
+            is_mistral = any(x in model_filename for x in ["mistral", "openhermes", "dolphin"])
+
+            if is_mistral:
                 prompt = f"{SYSTEM}\n\nUser: {prompt}\nAssistant:"
                 output_stream = model(
                     prompt=prompt,
@@ -92,14 +113,22 @@ class llmManager:
         except Exception as e:
             raise ValueError(f"❌ LLM Stream Chat error: {e}")
 
-    # In ModelManager.py - Modified chat() method
-    def chat(self, model_path, prompt, max_tokens=256, temperature=0.2, top_p=0.9, top_k=50):
-        """Handle non-streaming chat only"""
+    def chat(self, model_name: str, prompt, max_tokens=256, temperature=0.2, top_p=0.9, top_k=50):
         try:
-            self._llm_cache[model_path]["last_used"] = time.time()
-            model = self._llm_cache[model_path]["model"]
+            if model_name not in self._llm_cache:
+                raise ValueError("❌ Model not loaded. Please load the model first.")
 
-            if "mistral" in model_path.lower() or "openhermes" in model_path.lower():
+            self._llm_cache[model_name]["last_used"] = time.time()
+            model = self._llm_cache[model_name]["model"]
+
+            # 🔧 Correctly use dict-based manifest
+            if model_name not in self.mod_mainifest_file:
+                raise ValueError(f"❌ Model name '{model_name}' not found in manifest.")
+            model_filename = self.mod_mainifest_file[model_name].lower()
+
+            is_mistral = any(x in model_filename for x in ["mistral", "openhermes", "dolphin"])
+
+            if is_mistral:
                 prompt = f"{SYSTEM}\n\nUser: {prompt}\nAssistant:"
                 output = model(
                     prompt=prompt,
@@ -136,38 +165,42 @@ class llmManager:
         except Exception as e:
             raise ValueError(f"❌ LLM Chat error: {e}")
 
-    # Keep stream_chat() as is for streaming functionality
 
     def model_eviction_loop(self, ttl_seconds=600):
         while True:
-            time.sleep(60)  # Check every 1 min
+            time.sleep(60)
             now = time.time()
-            with self._cache_lock:  # ✅ Fix: lock access to _llm_cache safely
-                to_remove = [
-                    k for k, v in self._llm_cache.items()
-                    if now - v["last_used"] > ttl_seconds
-                ]
+            with self._cache_lock:
+                to_remove = [k for k, v in self._llm_cache.items() if now - v["last_used"] > ttl_seconds]
                 for k in to_remove:
                     del self._llm_cache[k]
                     print(f"🧹 Unloaded model: {k}")
             gc.collect()
-                
     def get_loaded_models(self):
         try:
             with self._cache_lock:
-                return list(self._llm_cache.keys())
+                return [
+                    {"model_name": k, "path": v.get("model_path"), "last_used": v.get("last_used")}
+                    for k, v in self._llm_cache.items()
+                ]
         except Exception as e:
-            return ValueError(f"Error loaded model due to {e}")
-    
+            raise ValueError(f"Error getting loaded models: {e}")
     def remove_all_models(self):
-        try:
-            
+        try: 
             with self._cache_lock:
                 self._llm_cache.clear()
                 print("🧹 Unloaded all models from cache.")
             gc.collect()
         except Exception as e:
-            raise ValueError(f"Error remove all model due to {e}")
+            raise ValueError(f"Error removing all models: {e}")
+    def is_loaded(self, model_name: str) -> bool:
+        return model_name in self._llm_cache
         
-    def is_loaded(self, model_path: str) -> bool:
-        return model_path in self._llm_cache
+    def convert_manifest_json(self, manifest_path: str) -> dict:
+        with open(manifest_path, 'r') as jf:
+            jdata = json.load(jf)
+        out = {}
+        base_path = os.path.dirname(manifest_path)
+        for entry in jdata:
+            out[entry['file_name']] = os.path.join(base_path, entry['model_name'])
+        return out
