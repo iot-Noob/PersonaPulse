@@ -278,7 +278,7 @@ async def simple_prompt(
         raise HTTPException(status_code=433, detail=f"Error getting response due to: {e}")
 
 @route.post("/chain_response", description="Get API response from Groq for chained prompts", tags=["Chain Response"])
-async def chain_res(creq: ChainRequest, temperature: float = 0.3, character: Optional[str] = None):
+async def chain_res(cms:ModelSelection,creq: ChainRequest, temperature: float = 0.3, character: Optional[str] = None,custom_prmopt:bool=False):
     try:
         if not (0.0 <= temperature <= 0.8):
             raise HTTPException(status_code=400, detail="Temperature must be between 0.0 and 0.8")
@@ -301,7 +301,8 @@ async def chain_res(creq: ChainRequest, temperature: float = 0.3, character: Opt
                 raise HTTPException(status_code=404, detail="Character not found in manifest")
 
         # Step 2: Add system message
-        messages.append({"role":"system","content":DEFAULT_SYSTEM_PROMPT})
+        if not custom_prmopt:
+         messages.append({"role":"system","content":DEFAULT_SYSTEM_PROMPT})
         messages.append({
             "role": creq.system.role,
             "content": creq.system.prompt
@@ -317,17 +318,41 @@ async def chain_res(creq: ChainRequest, temperature: float = 0.3, character: Opt
 
         print("Formatted Messages:", json.dumps(messages, indent=2))
 
-        # Step 4: Send request
-        res = client.chat.completions.create(
-            model=creq.model.value,
-            messages=messages,
-            temperature=temperature
-        )
+        
+        if custom_prmopt:
+            model_name = cms.local_model
+            if not llm_manager.is_loaded(model_name):
+                raise HTTPException(status_code=404, detail="Local model not loaded")
 
-        return {
-            "response": res.choices[0].message.content,
-            "model": creq.model
-        }
+            # ✅ Convert list of messages to a flat prompt string
+            prompt = "\n".join([f"{m['role']}: {m['content']}" for m in messages])
+            print("Prompt::: ",prompt,end="\n")
+            # ✅ Call your custom model
+            response = llm_manager.chat(
+                model_name=model_name,
+                prompt=prompt,
+                temperature=temperature,
+                max_tokens=512  # Optional: adjust as needed
+            )
+
+            return {
+                "response": response,
+                "model": model_name,
+                "source": "custom"
+            }
+
+        else:
+            # Step 4: Send request
+            res = client.chat.completions.create(
+                model=creq.model.value,
+                messages=messages,
+                temperature=temperature
+            )
+
+            return {
+                "response": res.choices[0].message.content,
+                "model": creq.model
+            }
 
     except Exception as e:
         return JSONResponse(

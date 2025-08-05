@@ -5,9 +5,9 @@ import SuspenseSlice from "./SuspenseSlice";
 const ChatWindow = ({ chatHistory, sref, Mode, chatEndRef }) => {
   return (
     <>
-      <div className="flex-1 w-full h-full">
+      <div className="flex-1 w-full h-full mt-[31px]">
         <div
-          className="h-[calc(80vh-89px)] overflow-y-auto pr-2 space-y-4"
+          className="h-[calc(90vh-89px)] overflow-y-auto pr-2 space-y-4"
           style={{
             scrollbarWidth: "thin",
             scrollbarColor: "#888 transparent",
