@@ -9,7 +9,7 @@ export default defineConfig({
   },
   server: {
     host: '0.0.0.0',
-    port:2345,
+    port:6900,
     strictPort: true,
     historyApiFallback: true, // <- for React Router
 
