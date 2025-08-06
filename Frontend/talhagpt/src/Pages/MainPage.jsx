@@ -223,7 +223,7 @@ useEffect(() => {
 
     setChains({
       ...chains,
-      [cname]: { temperature: 0.3, items: [{ prompt: "", role: "system" }] },
+      [cname]: { temperature: 0.3, items: [{ prompt: "", role: "user" }] },
     });
     setSelectedChain(cname);
     setError("");
