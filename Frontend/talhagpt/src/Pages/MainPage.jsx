@@ -10,7 +10,7 @@ import { getAiModels, setSettings, api_data } from "../Redux/dataSlice";
 import { toast } from "react-toastify";
 
 const API_BASE_URL = import.meta.env.VITE_API_ENDPOINT;
-const AI_API = import.meta.env.VITE_API_AI;
+// const AI_API = import.meta.env.VITE_API_AI;
 
 const MainPage = () => {
   const dispatch = useDispatch();
@@ -58,7 +58,7 @@ const MainPage = () => {
           axios.get(`${API_BASE_URL}/get_model`),
           axios.get(`${API_BASE_URL}/get_role`),
           axios.get(`${API_BASE_URL}/characters`),
-          axios.get(`${AI_API}/models`),
+          // axios.get(`${AI_API}/models`),
         ]);
 
         const sortedModels = (modelsRes?.data?.models || []).sort((a, b) =>
@@ -70,14 +70,14 @@ const MainPage = () => {
         const sortedCharacters = (charactersRes?.data?.characters || []).sort(
           (a, b) => a.localeCompare(b)
         );
-        const sortedAiModels = (Ai?.data || []).sort((a, b) =>
-          a.file_name.localeCompare(b.file_name)
-        );
+        // const sortedAiModels = (Ai?.data || []).sort((a, b) =>
+        //   a.file_name.localeCompare(b.file_name)
+        // );
 
         setModels(sortedModels);
         setRoles(sortedRoles);
         setCharacters(sortedCharacters);
-        dispatch(getAiModels(sortedAiModels));
+        // dispatch(getAiModels(sortedAiModels));
       } catch (err) {
         console.error("❌ Error fetching data:", err);
       }
@@ -229,14 +229,20 @@ useEffect(() => {
     setError("");
   };
 
-  const updateChainItem = (chainName, index, field, value) => {
-    const updatedItems = [...chains[chainName].items];
-    updatedItems[index][field] = value;
-    setChains({
-      ...chains,
-      [chainName]: { ...chains[chainName], items: updatedItems },
-    });
-  };
+const updateChainItem = (chainName, idx, field, value) => {
+  setChains(prev => {
+    const updatedItems = [...prev[chainName].items];
+    updatedItems[idx] = { ...updatedItems[idx], [field]: value };
+    return {
+      ...prev,
+      [chainName]: {
+        ...prev[chainName],
+        items: updatedItems
+      }
+    };
+  });
+};
+
 
   const removeChainItem = (chainName, index) => {
     const updatedItems = [...chains[chainName].items];
@@ -249,8 +255,10 @@ useEffect(() => {
 
   const removeChain = (chainName) => {
     const newChains = { ...chains };
+    const copied = { ...newChains[chainName] };
     delete newChains[chainName];
-    setChains(newChains);
+    newChains[newName] = copied;
+setChains(newChains);
     if (selectedChain === chainName) setSelectedChain(null);
   };
 
