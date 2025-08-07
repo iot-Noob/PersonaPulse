@@ -1,6 +1,6 @@
 from ast import mod
 from re import M
-from Models.gpt_mod import OpenAIModel,ModelSelection
+from Models.gpt_mod import OpenAIModel,ModelSelection,LocalModel
 from fastapi import APIRouter, HTTPException
 from fastapi.responses import JSONResponse,StreamingResponse
 from Models.main_model import ChainRequest,RoleEnum,Prompt_Input,LocMod
@@ -363,13 +363,8 @@ async def chain_res(cms:ModelSelection,creq: ChainRequest, temperature: float = 
 @route.get(path="/get_model", tags=["get_ai_model_data"])
 async def get_model(use_local:bool=False):
     if use_local:
-        llmf=llm_manager.mod_mainifest_file
-        local_models=[]
-        for fname, fpath in llmf.items():
-            local_models.append({
-                "file_name":fname
-            })  
-        return local_models
+ 
+         return {"models": [m.value for m in LocalModel]}
     else:
         return {"models": [model.value for model in OpenAIModel]}
 

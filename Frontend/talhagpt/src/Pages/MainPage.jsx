@@ -33,7 +33,11 @@ const MainPage = () => {
   const chatEndRef = useRef(null);
   const sref = useRef(null);
   const loadedRef = useRef(false);
+  const localModelEnabled = useSelector((state) =>
+    Boolean(state.dataslice.localModelActive)
+  );
 
+  console.log(localModelEnabled);
   useEffect(() => {
     if (!loadedRef.current) {
       const saved = localStorage.getItem("chatHistory");
@@ -52,10 +56,10 @@ const MainPage = () => {
   }, [chatHistory]);
 
   useEffect(() => {
-    const fetchData = async () => {
+    const timer = setTimeout(async () => {
       try {
-        const [modelsRes, rolesRes, charactersRes, Ai] = await Promise.all([
-          axios.get(`${API_BASE_URL}/get_model`),
+        const [modelsRes, rolesRes, charactersRes] = await Promise.all([
+          axios.get(`${API_BASE_URL}/get_model?use_local=${localModelEnabled}`),
           axios.get(`${API_BASE_URL}/get_role`),
           axios.get(`${API_BASE_URL}/characters`),
           // axios.get(`${AI_API}/models`),
@@ -77,23 +81,21 @@ const MainPage = () => {
         setModels(sortedModels);
         setRoles(sortedRoles);
         setCharacters(sortedCharacters);
-        // dispatch(getAiModels(sortedAiModels));
       } catch (err) {
         console.error("❌ Error fetching data:", err);
       }
-    };
+    }, 11); // debounce delay in ms
 
-    fetchData();
-  }, []);
+    return () => clearTimeout(timer); // cleanup previous timeout
+  }, [localModelEnabled]);
 
-useEffect(() => {
-  if (Mode === "Prompt") {
-    chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  } else {
-    sref.current?.scrollIntoView({ behavior: "smooth" });
-  }
-}, [chatHistory, Mode]);
-
+  useEffect(() => {
+    if (Mode === "Prompt") {
+      chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    } else {
+      sref.current?.scrollIntoView({ behavior: "smooth" });
+    }
+  }, [chatHistory, Mode]);
 
   const handleSubmit = async () => {
     if (!selectedModel || !selectedRole) {
@@ -229,20 +231,19 @@ useEffect(() => {
     setError("");
   };
 
-const updateChainItem = (chainName, idx, field, value) => {
-  setChains(prev => {
-    const updatedItems = [...prev[chainName].items];
-    updatedItems[idx] = { ...updatedItems[idx], [field]: value };
-    return {
-      ...prev,
-      [chainName]: {
-        ...prev[chainName],
-        items: updatedItems
-      }
-    };
-  });
-};
-
+  const updateChainItem = (chainName, idx, field, value) => {
+    setChains((prev) => {
+      const updatedItems = [...prev[chainName].items];
+      updatedItems[idx] = { ...updatedItems[idx], [field]: value };
+      return {
+        ...prev,
+        [chainName]: {
+          ...prev[chainName],
+          items: updatedItems,
+        },
+      };
+    });
+  };
 
   const removeChainItem = (chainName, index) => {
     const updatedItems = [...chains[chainName].items];
@@ -258,7 +259,7 @@ const updateChainItem = (chainName, idx, field, value) => {
     const copied = { ...newChains[chainName] };
     delete newChains[chainName];
     newChains[newName] = copied;
-setChains(newChains);
+    setChains(newChains);
     if (selectedChain === chainName) setSelectedChain(null);
   };
 

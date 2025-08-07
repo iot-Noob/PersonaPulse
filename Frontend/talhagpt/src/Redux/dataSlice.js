@@ -7,6 +7,8 @@ const initialState = {
   api_data: [],
   loading: false,
   custom_model_modam: false,
+  activate_model: "",
+  localModelActive:false
 };
 
 const dataSlicer = createSlice({
@@ -28,6 +30,12 @@ const dataSlicer = createSlice({
     showCustModelModam: (state, action) => {
       state.custom_model_modam = action.payload;
     },
+    activateModel: (state, action) => {
+      state.activate_model = action.payload;
+    },
+     LocalModelActive: (state, action) => {
+      state.localModelActive = action.payload;
+    },
   },
 });
 
@@ -37,5 +45,7 @@ export const {
   api_data,
   loader,
   showCustModelModam,
+  activateModel,
+  LocalModelActive
 } = dataSlicer.actions;
 export default dataSlicer.reducer;
