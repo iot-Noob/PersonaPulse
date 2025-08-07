@@ -361,8 +361,17 @@ async def chain_res(cms:ModelSelection,creq: ChainRequest, temperature: float = 
         )
 
 @route.get(path="/get_model", tags=["get_ai_model_data"])
-async def get_model():
-    return {"models": [model.value for model in OpenAIModel]}
+async def get_model(use_local:bool=False):
+    if use_local:
+        llmf=llm_manager.mod_mainifest_file
+        local_models=[]
+        for fname, fpath in llmf.items():
+            local_models.append({
+                "file_name":fname
+            })  
+        return local_models
+    else:
+        return {"models": [model.value for model in OpenAIModel]}
 
 @route.get(path="/get_role", tags=["get_ai_model_data"])
 async def get_role():
@@ -418,11 +427,17 @@ async def get_ai_mod():
         return ffr
     except Exception as e:
         return HTTPException(500,f"Error get model due to {e}")
-@route.delete("/unload_all_models")
+@route.delete("/unload_all_models",tags=["Unload Models"])
 async def unload_all_model():
     try:
         mrm=llm_manager.remove_all_models()
         return mrm
     except Exception as e:
         raise HTTPException(500,f"Error unload model due to {e}")
-    pass
+    
+@route.get("/model_status",tags=["get_ai_model_data"])
+async def model_status(name:str="Llama-3"):
+    try:
+        return llm_manager.is_loaded(name)
+    except Exception as e:
+        return HTTPException(500,f"Error get status of model due to {e}")
