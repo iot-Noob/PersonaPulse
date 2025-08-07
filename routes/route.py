@@ -404,14 +404,25 @@ async def load_local_model(mod_name: LocMod):
     
 @route.get("/get_aim", tags=["get_ai_model_data"])
 async def get_ai_mod():
-    glm = llm_manager.get_loaded_models()  # returns list of loaded models
-    loaded_names = {item["model_name"] for item in glm}  # for quick lookup
+    try:
+        glm = llm_manager.get_loaded_models()  # returns list of loaded models
+        loaded_names = {item["model_name"] for item in glm}  # for quick lookup
 
-    ffr = []
-    for model_name, file_path in llm_manager.mod_mainifest_file.items():
-        ffr.append({
-            "model_name": model_name,
-            "activated": model_name in loaded_names
-        })
+        ffr = []
+        for model_name, file_path in llm_manager.mod_mainifest_file.items():
+            ffr.append({
+                "model_name": model_name,
+                "activated": model_name in loaded_names
+            })
 
-    return ffr
+        return ffr
+    except Exception as e:
+        return HTTPException(500,f"Error get model due to {e}")
+@route.delete("/unload_all_models")
+async def unload_all_model():
+    try:
+        mrm=llm_manager.remove_all_models()
+        return mrm
+    except Exception as e:
+        raise HTTPException(500,f"Error unload model due to {e}")
+    pass

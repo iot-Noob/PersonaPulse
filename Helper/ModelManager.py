@@ -191,6 +191,7 @@ class llmManager:
                 self._llm_cache.clear()
                 print("🧹 Unloaded all models from cache.")
             gc.collect()
+            return  " 🧹 All model unloaded sucess"
         except Exception as e:
             raise ValueError(f"Error removing all models: {e}")
     def is_loaded(self, model_name: str) -> bool:

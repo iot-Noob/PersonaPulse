@@ -1,10 +1,19 @@
 import React, { useRef, useEffect, useState } from "react";
 import { useSelector } from "react-redux";
-import { TrashIcon, Cog6ToothIcon } from "@heroicons/react/16/solid";
+import {
+  TrashIcon,
+  Cog6ToothIcon,
+  ChartPieIcon,
+  LinkIcon,
+  CommandLineIcon,
+  Bars3BottomLeftIcon,
+} from "@heroicons/react/16/solid";
 import MessageModal from "./ConfirmModal";
 import ConfirmModal from "./ConfirmModal";
 import { useDispatch } from "react-redux";
 import { exit, enter } from "../Redux/mouseSlice";
+import CustomModelMenu from "./CustomModelMenu";
+import { showCustModelModam } from "../Redux/dataSlice";
 import Modal from "./Modal";
 export const AccordSec = ({
   selectedModel,
@@ -28,6 +37,7 @@ export const AccordSec = ({
   const checkboxRef = useRef(null);
   const cmr = useRef(null);
   const MouseIn = useSelector((state) => state.mouseenter.value);
+  const cmo = useSelector((state) => state.dataslice.custom_model_modam);
   useEffect(() => {
     if (MouseIn && checkboxRef.current) {
       checkboxRef.current.checked = false;
@@ -81,6 +91,13 @@ export const AccordSec = ({
               title="Delete Chat History"
             >
               <TrashIcon width={16} height={16} />
+            </button>
+            <button
+              className="btn btn-square btn-sm btn-primary"
+              onClick={() => dispatch(showCustModelModam(true))}
+              title="Enable Local Model"
+            >
+              <Bars3BottomLeftIcon width={16} height={16} />
             </button>
           </div>
         </div>
@@ -343,6 +360,13 @@ export const AccordSec = ({
         >
           <TrashIcon width={22} height={22} />
         </button>
+        <button
+          className="btn btn-square btn-sm btn-primary"
+          onClick={() => dispatch(showCustModelModam(true))}
+          title="Open Local Model"
+        >
+       <Bars3BottomLeftIcon width={16} height={16} />
+        </button>
       </div>
       <ConfirmModal
         id="del_chat_modal"
@@ -352,6 +376,7 @@ export const AccordSec = ({
           setChatHistory([]);
         }}
       />
+      <CustomModelMenu mid="cmod" />
       {/* Original layout for larger screens end */}
     </>
   );
