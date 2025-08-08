@@ -38,6 +38,8 @@ export const AccordSec = ({
   const cmr = useRef(null);
   const MouseIn = useSelector((state) => state.mouseenter.value);
   const cmo = useSelector((state) => state.dataslice.custom_model_modam);
+  let amod=useSelector((state)=>state.dataslice.activate_model)
+  let cml=useSelector((state)=>Boolean(state.dataslice.localModelActive))
   useEffect(() => {
     if (MouseIn && checkboxRef.current) {
       checkboxRef.current.checked = false;
@@ -124,6 +126,7 @@ export const AccordSec = ({
                 Model:
               </label>
               <select
+                 disabled={cml && amod===""}
                 id="modelSelect"
                 className="select select-sm bg-gray-800/80 text-white w-full rounded-lg border-none"
                 value={selectedModel}
@@ -150,6 +153,7 @@ export const AccordSec = ({
                 Mode:
               </label>
               <select
+                disabled={cml && amod===""}
                 id="modeSelect"
                 className="select select-sm bg-gray-800/80 text-white w-full rounded-lg border-none"
                 value={Mode}
@@ -268,6 +272,7 @@ export const AccordSec = ({
       {/* Original layout for larger screens */}
       <div className="hidden sm:flex flex-wrap gap-2 w-full">
         <select
+          disabled={cml && amod===""}
           className="select select-sm bg-gray-800/80 text-white w-full sm:w-28 rounded-lg"
           value={selectedModel}
           onChange={(e) => setSelectedModel(e.target.value)}
@@ -283,6 +288,7 @@ export const AccordSec = ({
         </select>
 
         <select
+        disabled={cml && amod===""}
           className="select select-sm bg-gray-800/80 text-white w-full sm:w-28 rounded-lg"
           value={Mode}
           onChange={(e) => {
@@ -300,9 +306,9 @@ export const AccordSec = ({
             </option>
           ))}
         </select>
-
+          
         <select
-          disabled={Mode === "Analytical"}
+          disabled={Mode === "Analytical" || (cml && amod==="")}
           className="select select-sm bg-gray-800/80 text-white w-full sm:w-28 rounded-lg"
           value={selectedCharacter}
           onChange={(e) => {

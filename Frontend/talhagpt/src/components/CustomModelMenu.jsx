@@ -1,7 +1,12 @@
 import React, { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import Modal from "./Modal";
-import { showCustModelModam, loader, activateModel,LocalModelActive } from "../Redux/dataSlice";
+import {
+  showCustModelModam,
+  loader,
+  activateModel,
+  LocalModelActive,
+} from "../Redux/dataSlice";
 import ModalOpenerCloser from "../Helper/ModalOpenerCloser";
 import axios from "axios";
 import { toast } from "react-toastify";
@@ -19,6 +24,18 @@ const CustomModelMenu = ({ mid = "cmid" }) => {
   const handleClose = () => {
     dispatch(showCustModelModam(false));
   };
+
+  let get_cmodel = async () => {
+    let res = await axios.get(`${API_EP}/get_aim`);
+    setAiModel(res.data);
+
+    // Use res.data directly to find activated model
+    const activatedModel = res.data.find((v) => v.activated);
+    if (activatedModel) {
+      setSelectedModel(activatedModel.model_name);
+    }
+  };
+
   useEffect(() => {
     const debounceTimeout = setTimeout(() => {
       localStorage.setItem("enableModel", JSON.stringify(localModelEnabled));
@@ -27,35 +44,31 @@ const CustomModelMenu = ({ mid = "cmid" }) => {
     return () => clearTimeout(debounceTimeout); // cleanup if value changes quickly
   }, [localModelEnabled]);
 
-useEffect(() => {
-  const stored = localStorage.getItem("enableModel");
-  if (stored !== null) {
-    const parsed = JSON.parse(stored);
-    setLocalModelEnabled(parsed);
-    dispatch(LocalModelActive(parsed)); // ✅ dispatch correct value
-  }
-}, []);
+  useEffect(() => {
+    const stored = localStorage.getItem("enableModel");
+    if (stored !== null) {
+      const parsed = JSON.parse(stored);
+      setLocalModelEnabled(parsed);
+    }
+  }, []);
 
+  useEffect(() => {
+    const dbt = setTimeout(() => {
+      dispatch(LocalModelActive(localModelEnabled));
+    }, 200);
+
+    return () => clearTimeout(dbt);
+  }, [localModelEnabled, dispatch]);
 
   useEffect(() => {
     if (mos) {
       ModalOpenerCloser.open_modal(mid);
+      get_cmodel();
     } else {
       ModalOpenerCloser.close_modal(mid);
     }
   }, [mos]);
   useEffect(() => {
-    let get_cmodel = async () => {
-      let res = await axios.get(`${API_EP}/get_aim`);
-      setAiModel(res.data);
-
-      // Use res.data directly to find activated model
-      const activatedModel = res.data.find((v) => v.activated);
-      if (activatedModel) {
-        setSelectedModel(activatedModel.model_name);
-      }
-    };
-
     get_cmodel();
   }, []);
 
@@ -186,7 +199,7 @@ useEffect(() => {
               Choose a Local model
             </option>
 
-            {aiModel.map((model) => (
+            {aiModel.map((model, ind) => (
               <option
                 key={model.model_name}
                 value={model.model_name}

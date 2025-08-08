@@ -6,7 +6,8 @@ import { PaperAirplaneIcon } from "@heroicons/react/16/solid";
 export const TextInputBox = ({ setPrompt, handleSubmit, prompt }) => {
   let dispatch = useDispatch();
   const loading = useSelector((state) => state.mouseenter.loading); // ✅ CORRECT
-
+  let amod=useSelector((state)=>state.dataslice.activate_model)
+  let cml=useSelector((state)=>Boolean(state.dataslice.localModelActive))
   return (
     <>
       <div className="flex flex-col sm:flex-row gap-2">
@@ -29,7 +30,7 @@ export const TextInputBox = ({ setPrompt, handleSubmit, prompt }) => {
            onMouseEnter={() => dispatch(enter())}
           className="btn btn-sm btn-primary shrink-0 "
           onClick={handleSubmit}
-          disabled={loading}
+          disabled={loading ||(cml&&amod=="")}
         >
           {loading ? <span className="loading loading-spinner" /> : <PaperAirplaneIcon width={22} height={33}/>}
         </button>

@@ -33,10 +33,11 @@ const MainPage = () => {
   const chatEndRef = useRef(null);
   const sref = useRef(null);
   const loadedRef = useRef(false);
+  let amod=useSelector((state)=>state.dataslice.activate_model)
   const localModelEnabled = useSelector((state) =>
     Boolean(state.dataslice.localModelActive)
   );
-
+ 
   useEffect(() => {
     if (!loadedRef.current) {
       const saved = localStorage.getItem("chatHistory");
@@ -57,7 +58,7 @@ const MainPage = () => {
   useEffect(() => {
     const timer = setTimeout(async () => {
       try {
-        const [modelsRes, rolesRes, charactersRes] = await Promise.all([
+        const [ modelsRes, rolesRes, charactersRes] = await Promise.all([
           axios.get(`${API_BASE_URL}/get_model?use_local=${localModelEnabled}`),
           axios.get(`${API_BASE_URL}/get_role`),
           axios.get(`${API_BASE_URL}/characters`),
@@ -76,15 +77,18 @@ const MainPage = () => {
         // const sortedAiModels = (Ai?.data || []).sort((a, b) =>
         //   a.file_name.localeCompare(b.file_name)
         // );
-
-        setModels(sortedModels);
+        // const resultAction = await dispatch(fetchModels(localModelEnabled));
+        // if (fetchModels.fulfilled.match(resultAction)) {
+        //    setModels(resultAction.payload)
+        // }
+        setModels(sortedModels)
         setRoles(sortedRoles);
         setCharacters(sortedCharacters);
       } catch (err) {
         console.error("❌ Error fetching data:", err);
       }
     }, 11); // debounce delay in ms
-
+    
     return () => clearTimeout(timer); // cleanup previous timeout
   }, [localModelEnabled]);
 
