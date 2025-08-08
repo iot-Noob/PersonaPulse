@@ -3,7 +3,7 @@ from threading import Lock
 import gc
 import time
 from collections import defaultdict
-from Helper.SysPrompt import messages, SYSTEM
+from Helper.SysPrompt import system_messages, SYSTEM_MM
 import os
 import json
 class llmManager:
@@ -71,7 +71,7 @@ class llmManager:
             is_mistral = any(x in model_filename for x in ["mistral", "openhermes", "dolphin"])
 
             if is_mistral:
-                prompt = f"{SYSTEM}\n\nUser: {prompt}\nAssistant:"
+                prompt = f"{SYSTEM_MM}\n\nUser: {prompt}\nAssistant:"
                 output_stream = model(
                     prompt=prompt,
                     max_tokens=max_tokens,
@@ -85,7 +85,7 @@ class llmManager:
                     yield chunk["choices"][0]["text"]
             else:
                 try:
-                    chat_messages = messages + [{"role": "user", "content": prompt}]
+                    chat_messages = system_messages + [{"role": "user", "content": prompt}]
                     output_stream = model(
                         messages=chat_messages,
                         temperature=temperature,
@@ -98,7 +98,7 @@ class llmManager:
                     for chunk in output_stream:
                         yield chunk["choices"][0]["delta"].get("content", "")
                 except TypeError:
-                    prompt = f"{SYSTEM}\n\nUser: {prompt}\nAssistant:"
+                    prompt = f"{SYSTEM_MM}\n\nUser: {prompt}\nAssistant:"
                     output_stream = model(
                         prompt=prompt,
                         max_tokens=max_tokens,
@@ -129,7 +129,7 @@ class llmManager:
             is_mistral = any(x in model_filename for x in ["mistral", "openhermes", "dolphin"])
 
             if is_mistral:
-                prompt = f"{SYSTEM}\n\nUser: {prompt}\nAssistant:"
+                prompt = f"{SYSTEM_MM}\n\nUser: {prompt}\nAssistant:"
                 output = model(
                     prompt=prompt,
                     max_tokens=max_tokens,
@@ -141,7 +141,7 @@ class llmManager:
                 return output["choices"][0]["text"].strip()
             else:
                 try:
-                    chat_messages = messages + [{"role": "user", "content": prompt}]
+                    chat_messages = system_messages + [{"role": "user", "content": prompt}]
                     output = model(
                         messages=chat_messages,
                         temperature=temperature,
@@ -152,7 +152,7 @@ class llmManager:
                     )
                     return output["choices"][0]["message"]["content"].strip()
                 except TypeError:
-                    prompt = f"{SYSTEM}\n\nUser: {prompt}\nAssistant:"
+                    prompt = f"{SYSTEM_MM}\n\nUser: {prompt}\nAssistant:"
                     output = model(
                         prompt=prompt,
                         max_tokens=max_tokens,
