@@ -37,7 +37,6 @@ const MainPage = () => {
     Boolean(state.dataslice.localModelActive)
   );
 
-  console.log(localModelEnabled);
   useEffect(() => {
     if (!loadedRef.current) {
       const saved = localStorage.getItem("chatHistory");
@@ -115,15 +114,38 @@ const MainPage = () => {
 
       if (chainKeys.length === 0) {
         if (Mode === "Prompt") {
+          const params = {
+            role: selectedRole,
+            model: selectedModel,
+            temperature,
+            use_local: localModelEnabled,
+          };
+
+          // Only include character if it exists
+          if (selectedCharacter) {
+            params.character = selectedCharacter;
+          }
           const res = await axios.post(
             `${API_BASE_URL}/simple_prompt`,
-            { prompt: finalPrompt },
+            {
+              cms: {
+                local_model: localModelEnabled
+                  ? selectedModel === "mistral-7b"
+                    ? "mistral-7b"
+                    : "Llama-3"
+                  : "Llama-3",
+              },
+              prompt: {
+                prompt: finalPrompt,
+              },
+            },
             {
               params: {
                 role: selectedRole,
-                model: selectedModel,
-                character: selectedCharacter || null,
+                model: !localModelEnabled ? selectedModel : "llama3-8b-8192", // must be one of the API's enum list
                 temperature,
+                use_local: localModelEnabled,
+                ...(selectedCharacter && { character: selectedCharacter }),
               },
             }
           );
@@ -182,15 +204,24 @@ const MainPage = () => {
           axios.post(
             `${API_BASE_URL}/chain_response`,
             {
-              model: selectedModel,
-              system: {
-                role: selectedRole,
-                prompt: finalPrompt,
+              cms: {
+                local_model: localModelEnabled ? selectedModel : "Llama-3", // or pick one dynamically if needed
               },
-              chain: [data],
+              creq: {
+                model: !localModelEnabled ? selectedModel : "llama3-8b-8192",
+                system: {
+                  role: selectedRole,
+                  prompt: finalPrompt,
+                },
+                chain: Array.isArray(data) ? data : [data],
+              },
             },
             {
-              params: { temperature: temp, character: selectedCharacter },
+              params: {
+                temperature: temp,
+                character: selectedCharacter,
+                custom_prmopt: localModelEnabled,
+              },
             }
           )
         );
