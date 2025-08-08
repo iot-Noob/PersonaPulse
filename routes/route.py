@@ -13,6 +13,7 @@ import json
 from uuid import uuid4
 from typing import Optional
 from Helper.ModelManager import llmManager
+from starlette.concurrency import run_in_threadpool
 load_dotenv()
 base_dir = os.path.dirname(os.path.abspath(__file__))
 roles_dir = os.path.join(base_dir, "../Roles")
@@ -192,11 +193,12 @@ async def simple_prompt(
                     raise HTTPException(404, detail="Requested model is not loaded in local cache")
 
                 if character is None:
-                    result = llm_manager.chat(
-                        model_name=model_name,
-                        prompt=prompt.prompt,
-                        temperature=temperature,
-                        max_tokens=256
+                    result = await run_in_threadpool(
+                        llm_manager.chat,
+                        model_name,
+                        prompt.prompt,
+                        temperature,
+                        256  
                     )
                 else:
                     persona_prompt = None
@@ -217,11 +219,12 @@ async def simple_prompt(
 
                     # You can modify this if your LLM expects full message chain instead
                     combined_prompt = f"{persona_prompt.strip()}\n\n{prompt.prompt.strip()}"
-                    result = llm_manager.chat(
-                        model_name=model_name,
-                        prompt=combined_prompt,
-                        temperature=temperature,
-                        max_tokens=256
+                    result = await run_in_threadpool(
+                        llm_manager.chat,
+                        model_name,
+                        combined_prompt,
+                        temperature,
+                        256  # max_tokens
                     )
 
                 return {
@@ -328,11 +331,13 @@ async def chain_res(cms:ModelSelection,creq: ChainRequest, temperature: float = 
             prompt = "\n".join([f"{m['role']}: {m['content']}" for m in messages])
             print("Prompt::: ",prompt,end="\n")
             # ✅ Call your custom model
-            response = llm_manager.chat(
+
+            response = await run_in_threadpool(
+                llm_manager.chat,
                 model_name=model_name,
                 prompt=prompt,
                 temperature=temperature,
-                max_tokens=512  # Optional: adjust as needed
+                max_tokens=512
             )
 
             return {
@@ -396,16 +401,14 @@ async def get_character():
 @route.post("/load_model", tags=["load-local-model"])
 async def load_local_model(mod_name: LocMod):
     try:
-
         if not llm_manager.is_loaded(mod_name.loc_mod):
-        
-            llm_manager.get_llm(model_name=mod_name.loc_mod)
-            return {"status": "✅ Model loaded", "model_path":mod_name.loc_mod}
+            # Run the blocking load call in threadpool
+            await run_in_threadpool(llm_manager.get_llm, model_name=mod_name.loc_mod)
+            return {"status": "✅ Model loaded", "model_path": mod_name.loc_mod}
         else:
-            return JSONResponse("Model loaded already",200)
+            return JSONResponse("Model loaded already", 200)
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"❌ Error loading model: {str(e)}")
-    
 @route.get("/get_aim", tags=["get_ai_model_data"])
 async def get_ai_mod():
     try:
