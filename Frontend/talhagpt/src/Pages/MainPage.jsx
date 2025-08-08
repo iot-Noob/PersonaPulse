@@ -228,15 +228,20 @@ useEffect(() => {
     setSelectedChain(cname);
     setError("");
   };
+const updateChainItem = (chainName, idx, key, value) => {
+  setChains(prevChains => {
+    // copy the whole chains object
+    const newChains = {...prevChains};
+    // copy items array for the specific chain
+    const items = [...newChains[chainName].items];
+    // update the specific item
+    items[idx] = {...items[idx], [key]: value};
+    // assign back updated items
+    newChains[chainName] = {...newChains[chainName], items};
+    return newChains;
+  });
+};
 
-  const updateChainItem = (chainName, index, field, value) => {
-    const updatedItems = [...chains[chainName].items];
-    updatedItems[index][field] = value;
-    setChains({
-      ...chains,
-      [chainName]: { ...chains[chainName], items: updatedItems },
-    });
-  };
 
   const removeChainItem = (chainName, index) => {
     const updatedItems = [...chains[chainName].items];
