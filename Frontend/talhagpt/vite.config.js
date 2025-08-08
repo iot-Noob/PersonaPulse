@@ -9,15 +9,15 @@ export default defineConfig({
   },
   server: {
     host: '0.0.0.0',
-    port:6900,
+    port:7000,
     strictPort: true,
     historyApiFallback: true, // <- for React Router
 
     cors: {
-      origin: ['https://persona.talhahub.io'], // ✅ no trailing slash here
+      origin: ['https://persona.nuketerm.mlt'], // ✅ no trailing slash here
       credentials: true,
     },
-    allowedHosts: ['persona.talhahub.io'], 
+    allowedHosts: ['persona.nuketerm.mlt'], 
   },
   plugins: [react(), tailwindcss()],
 })
