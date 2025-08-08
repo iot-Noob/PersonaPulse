@@ -33,11 +33,11 @@ const MainPage = () => {
   const chatEndRef = useRef(null);
   const sref = useRef(null);
   const loadedRef = useRef(false);
-  let amod=useSelector((state)=>state.dataslice.activate_model)
+  let amod = useSelector((state) => state.dataslice.activate_model);
   const localModelEnabled = useSelector((state) =>
     Boolean(state.dataslice.localModelActive)
   );
- 
+
   useEffect(() => {
     if (!loadedRef.current) {
       const saved = localStorage.getItem("chatHistory");
@@ -58,38 +58,54 @@ const MainPage = () => {
   useEffect(() => {
     const timer = setTimeout(async () => {
       try {
-        const [ modelsRes, rolesRes, charactersRes] = await Promise.all([
+        const results = await Promise.allSettled([
           axios.get(`${API_BASE_URL}/get_model?use_local=${localModelEnabled}`),
           axios.get(`${API_BASE_URL}/get_role`),
           axios.get(`${API_BASE_URL}/characters`),
-          // axios.get(`${AI_API}/models`),
         ]);
 
-        const sortedModels = (modelsRes?.data?.models || []).sort((a, b) =>
-          a.localeCompare(b)
-        );
-        const sortedRoles = (rolesRes?.data?.Roles || []).sort((a, b) =>
-          a.localeCompare(b)
-        );
-        const sortedCharacters = (charactersRes?.data?.characters || []).sort(
-          (a, b) => a.localeCompare(b)
-        );
-        // const sortedAiModels = (Ai?.data || []).sort((a, b) =>
-        //   a.file_name.localeCompare(b.file_name)
-        // );
-        // const resultAction = await dispatch(fetchModels(localModelEnabled));
-        // if (fetchModels.fulfilled.match(resultAction)) {
-        //    setModels(resultAction.payload)
-        // }
-        setModels(sortedModels)
-        setRoles(sortedRoles);
-        setCharacters(sortedCharacters);
+        if (results[0].status === "fulfilled") {
+          const sortedModels = (results[0].value?.data?.models || []).sort(
+            (a, b) => a.localeCompare(b)
+          );
+          setModels(sortedModels);
+        } else {
+          console.error("Error fetching models:", results[0].reason);
+          toast.error(
+            `Error ${results[0].status}\n\nError fetch model due to ${results[0].reason}`
+          );
+        }
+
+        if (results[1].status === "fulfilled") {
+          const sortedRoles = (results[1].value?.data?.Roles || []).sort(
+            (a, b) => a.localeCompare(b)
+          );
+          setRoles(sortedRoles);
+        } else {
+          console.error("Error fetching roles:", results[1].reason);
+          toast.error(
+            `Error ${results[1].status}\n\nError fetch model due to ${results[1].reason}`
+          );
+        }
+
+        if (results[2].status === "fulfilled") {
+          const sortedCharacters = (
+            results[2].value?.data?.characters || []
+          ).sort((a, b) => a.localeCompare(b));
+          setCharacters(sortedCharacters);
+        } else {
+          console.error("Error fetching characters:", results[2].reason);
+          toast.error(
+            `Error ${results[2].status}\n\nError fetch model due to ${results[2].reason}`
+          );
+        }
       } catch (err) {
-        console.error("❌ Error fetching data:", err);
+        console.error("❌ Unexpected error fetching data:", err);
+        toast.error(`Error occur ${err}`);
       }
-    }, 11); // debounce delay in ms
-    
-    return () => clearTimeout(timer); // cleanup previous timeout
+    }, 33);
+
+    return () => clearTimeout(timer);
   }, [localModelEnabled]);
 
   useEffect(() => {
@@ -154,7 +170,13 @@ const MainPage = () => {
             }
           );
 
-          setResponse(res.data.response);
+          if (res.status === 200) {
+            setResponse(res.data.response);
+          } else {
+            toast.error(
+              `Error ${res.status}\n\n Cant load message response due to ${res.statusText}`
+            );
+          }
           setChatHistory((prev) => [
             ...prev,
             { user: prompt, bot: res.data.response },
@@ -172,8 +194,14 @@ const MainPage = () => {
               },
             }
           );
+          if (res.status === 20) {
+            setResponse(res);
+          } else {
+            toast.error(
+              `Error ${res.status}\n\n Cant load message response due to ${res.statusText}`
+            );
+          }
 
-          setResponse(res);
           setChatHistory((prev) => [
             ...prev,
             {
@@ -231,6 +259,13 @@ const MainPage = () => {
         );
 
         const results = await Promise.all(promises);
+        for (let r of results) {
+          if (r.status !== 200) {
+            toast.error(
+              `Error ${r.status}\n\n Cannot get chain result due to ${r.statusText}`
+            );
+          }
+        }
         const combinedResponse = results
           .map((res) => res.data.response)
           .join("\n---\n");

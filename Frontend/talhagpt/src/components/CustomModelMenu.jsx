@@ -88,7 +88,7 @@ const CustomModelMenu = ({ mid = "cmid" }) => {
       toast.warn("Model not selected, please choose one");
       return;
     }
-
+    dispatch(showCustModelModam (false))
     dispatch(loader(true));
     try {
       const res = await axios.post(`${API_EP}/load_model`, {
