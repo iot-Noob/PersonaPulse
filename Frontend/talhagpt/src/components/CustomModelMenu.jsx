@@ -93,7 +93,11 @@ const CustomModelMenu = ({ mid = "cmid" }) => {
     try {
       const res = await axios.post(`${API_EP}/load_model`, {
         loc_mod: selectedModel,
-      });
+      },
+  {
+    timeout: 300000, // 5 minutes in milliseconds
+  }
+    );
 
       if (res.status === 200) {
         toast.success("Model loaded successfully");
