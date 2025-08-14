@@ -102,6 +102,10 @@
     "file":"OpenAI_Dev.json",
      "subname": "OpenAI Developer"
   },
+     {
+    "file":"visa_advsisor.json",
+     "subname": "Visa Advisor"
+  },
     {
     "file":"Writer.json",
      "subname": "Professional Writer"
