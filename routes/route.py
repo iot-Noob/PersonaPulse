@@ -1,9 +1,8 @@
 from fileinput import filename
 from re import T
-from tkinter import NO
-from token import OP
+ 
 from Models.gpt_mod import OpenAIModel
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException,Query
 from fastapi.responses import JSONResponse,StreamingResponse
 from Models.main_model import ChainRequest,RoleEnum,Prompt_Input
 from Models.dyn_enum import get_character_enum
@@ -14,6 +13,7 @@ from contextlib import asynccontextmanager
 import json
 from uuid import uuid4
 from typing import Optional
+
 load_dotenv()
 base_dir = os.path.dirname(os.path.abspath(__file__))
 roles_dir = os.path.join(base_dir, "../Roles")
@@ -26,7 +26,11 @@ async def lifespan(app: APIRouter):
     print("STARTUP: Init Groq client")
     apikey = os.getenv("API_KEY")
     global client
-
+    global mainf  
+    if not os.path.exists(manifest_path):
+        raise ValueError("Error cant load manifest file make sure poath and fiename is correct or file exist")
+    with open(manifest_path, 'r', encoding='utf-8') as f:
+        mainf  = json.load(f)
     if not apikey:
         raise ValueError("API key missing")
     
@@ -41,6 +45,94 @@ async def lifespan(app: APIRouter):
     print("SHUTDOWN: Clean up resources")
 
 route = APIRouter(lifespan=lifespan)
+ 
+def make_echart(prompt: str, model, temperature: float):
+    try:
+        SYSTEM_PROMPT = """
+        You are a helpful assistant focused exclusively on generating valid ECharts option objects in JSON format.
+        Return ONLY the JSON object for the chart (do not wrap in code blocks or embed in markdown).
+        Supported chart types: bar, line, pie, scatter, radar.
+        Use realistic example data only.
+        Always include tooltip for better interactivity.
+        If you cannot generate a valid chart, return an empty object: {}.
+        """.strip()
+
+        messages = [
+            {"role": "system", "content": SYSTEM_PROMPT},
+            {"role": "user", "content": prompt.prompt}
+        ]
+
+        response = client.chat.completions.create(
+            model=model.value,
+            messages=messages,
+            temperature=temperature,
+        )
+
+        raw = response.choices[0].message.content.strip()
+
+        # Remove code block syntax if present
+        if raw.startswith("```"):
+            raw = raw.strip("`").strip()
+            if raw.lower().startswith("json"):
+                raw = raw[4:].strip()
+
+        # Parse JSON
+        try:
+            chart_option = json.loads(raw)
+            if isinstance(chart_option, dict):
+                return chart_option
+            else:
+                return {}  # Not a valid ECharts object
+        except json.JSONDecodeError:
+            return {}  # Model didn't return valid JSON
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error generating ECharts: {e}")
+    
+    
+@route.post("/echarts", tags=["echart response"])
+async def get_chart(
+    prmopt:Prompt_Input,
+    model: OpenAIModel,
+    temperature: float,
+    
+):
+    try:
+        res=make_echart(prmopt,model,temperature)
+        return res
+    except Exception as e:
+        raise HTTPException(500, f"Error occurred in ECharts generation: {str(e)}")
+    
+DEFAULT_SYSTEM_PROMPT = """
+You are a helpful and truthful assistant.
+
+## 📐 Formatting Rules
+- Use headings (##, ###), bullet or numbered lists.
+- Use **inline code** (`...`) only for variable names, keywords, or function names in sentences.
+- Use **fenced code blocks with language tags** (e.g. ```python) for *all* code snippets — even small ones (1–2 lines).
+- Do NOT wrap tables or Markdown in code blocks. Use plain Markdown format.
+- Preserve line breaks in poems or structured text.
+
+## 🧠 Factuality Rules
+- Provide only verified, factual information.
+- If unsure or unverified, respond: “I’m not certain” or “I don’t know.”
+- Do NOT invent functions, APIs, or data.
+- Do not assume undocumented APIs or features exist — if unsure, say so.
+- When referencing facts or APIs, cite credible sources clearly (e.g., “According to the OpenAI docs…”)
+
+## 🛠️ Reasoning & Verification
+- Use Chain-of-Thought: “Let’s think step-by-step.”
+- Then use Chain-of-Verification: re-check each fact before finalizing.
+- If output includes code, suggest a test or validation step.
+- Optionally include a few-shot example where the correct answer is “I don’t know.”
+
+## 📡 (Optional) RAG
+- If external data is available, retrieve and cite it.
+- If no source is found, say “I couldn’t verify that.”
+
+Your final response must strictly follow all the above rules.
+""".strip()
+
 
 @route.post(path="/simple_prompt", tags=["Simple_prompt"])
 async def simple_prompt(role: RoleEnum, model: OpenAIModel, prompt: Prompt_Input, temperature: float = 0.3,character: Optional[gc] = None):
@@ -50,6 +142,10 @@ async def simple_prompt(role: RoleEnum, model: OpenAIModel, prompt: Prompt_Input
             raise HTTPException(status_code=400, detail="Temperature must be between 0.0 and 1.0")
 
         messages = [
+            {
+                "role":"system",
+                "content":DEFAULT_SYSTEM_PROMPT
+            },
             {
                 "role": role.value,  # Convert enum to string
                 "content": prompt.prompt,
@@ -67,8 +163,6 @@ async def simple_prompt(role: RoleEnum, model: OpenAIModel, prompt: Prompt_Input
                 temperature=temperature,
             )
         else:
-            with open(manifest_path, 'r', encoding='utf-8') as f:
-                mainf:dict = json.load(f)
             for k,v in mainf.items():
                 for va in v:
                     if va["subname"]==character.value:
@@ -100,16 +194,36 @@ async def simple_prompt(role: RoleEnum, model: OpenAIModel, prompt: Prompt_Input
         raise HTTPException(status_code=433, detail=f"Error getting response due to: {e}")
 
 @route.post("/chain_response", description="Get API response from Groq for chained prompts", tags=["Chain Response"])
-async def chain_res(creq: ChainRequest, temperature: float=0.3):
+async def chain_res(creq: ChainRequest, temperature: float = 0.3, character: Optional[str] = None):
     try:
         if not (0.0 <= temperature <= 0.8):
             raise HTTPException(status_code=400, detail="Temperature must be between 0.0 and 0.8")
 
-        messages = [{
+        messages = []
+
+        # Step 1: Load persona if character is provided
+        if character:
+            found = False
+            for k, v in mainf.items():
+                for val in v:
+                    if val["subname"] == character:
+                        bp = os.path.join(roles_dir, val["file"])
+                        if os.path.exists(bp):
+                            with open(bp, 'r', encoding='utf-8') as f:
+                                persona = json.load(f)
+                            messages.append(persona)
+                            found = True
+            if not found:
+                raise HTTPException(status_code=404, detail="Character not found in manifest")
+
+        # Step 2: Add system message
+        messages.append({"role":"system","content":DEFAULT_SYSTEM_PROMPT})
+        messages.append({
             "role": creq.system.role,
             "content": creq.system.prompt
-        }]
+        })
 
+        # Step 3: Append chain steps (always!)
         for step in creq.chain:
             for _, step_content in step.items():
                 messages.append({
@@ -117,10 +231,11 @@ async def chain_res(creq: ChainRequest, temperature: float=0.3):
                     "content": step_content.prompt
                 })
 
-        print("Formatted Messages:", messages)
+        print("Formatted Messages:", json.dumps(messages, indent=2))
 
+        # Step 4: Send request
         res = client.chat.completions.create(
-            model=creq.model.value,  # example: "llama3-70b-8192"
+            model=creq.model.value,
             messages=messages,
             temperature=temperature
         )
@@ -151,12 +266,10 @@ async def get_character():
     if not os.path.exists(manifest_path):
         raise HTTPException(status_code=404, detail="Manifest.json not found")
 
-    with open(manifest_path, "r", encoding="utf-8") as f:
-        manifest = json.load(f)
 
     result = []
 
-    for v in manifest.values():
+    for v in mainf.values():
         for item in v:
             file = item.get("file")
             subname = item.get("subname")

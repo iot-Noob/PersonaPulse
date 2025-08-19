@@ -6,7 +6,7 @@
     },
      {
       "file": "trump.json",
-      "subname": "Donald Trump"
+      "subname": "Trump(America President)"
     },
     {
       "file": "ags_tp.json",
@@ -20,8 +20,14 @@
       "file": "modi.json",
       "subname": "Narindar Modi"
     },
-   
- 
+      {
+      "file": "prmopt_corrector.json",
+      "subname": "Prompt Correct"
+    },
+      {
+      "file": "DoomDevelopers.json",
+      "subname": "Doom Devs ID Software"
+    },
     {
       "file": "putin.json",
       "subname": "Valadmir Putin"
@@ -34,15 +40,80 @@
     "file":"radhe_bhaiya.json",
      "subname": "Radhe Bhaiya (Tera naam)"
   },
-
-    {
-    "file":"mom.json",
-     "subname": "Talha Mom"
+ {
+    "file":"python_dev_sr.json",
+     "subname": "Python Dev SR"
   },
-  
+    
+      {
+    "file":"muna_bjai.json",
+     "subname": "Muna Bhai MBBS"
+  },
+   {
+    "file":"sahilAdeem.json",
+     "subname": "Sahil Adeem"
+  },
+     
+      {
+    "file":"shc.json",
+     "subname": "SilentHill Creator"
+  },
     {
     "file":"galib.json",
      "subname": "Mirza Galib"
+  },
+  {
+    "file":"astrologist.json",
+     "subname": "Asterologist"
+  },
+    {
+    "file":"HR_recruter.json",
+     "subname": "CV Approver"
+  },
+  {
+    "file":"electroboom.json",
+     "subname": "Electroboom"
+  },
+   {
+    "file":"ai_ml_eng.json",
+     "subname": "AI ML Prompt Eng"
+  },
+  {
+    "file":"Dr. Roland Mahmood.json",
+     "subname": "Dr. Roland(Psychetrist/Psycologist)"
+  },
+   {
+    "file":"FrontendDev.json",
+     "subname": "Front End Dev JS dev"
+  },
+    {
+    "file":"Psysic_Healer.json",
+     "subname": "Psysic Healer"
+  },
+ 
+   {
+    "file":"DoctorASR.json",
+     "subname": "Dr ASR Pharmasucital"
+  },
+   {
+    "file":"IslamicDream.json",
+     "subname": "Khawab ki tabeer (Islamic)"
+  },
+   {
+    "file":"c++_devs.json",
+     "subname": "RitchieStroustrupBot(C++ Creator)"
+  },
+   {
+    "file":"OpenAI_Dev.json",
+     "subname": "OpenAI Developer"
+  },
+     {
+    "file":"visa_advsisor.json",
+     "subname": "Visa Advisor"
+  },
+    {
+    "file":"Writer.json",
+     "subname": "Professional Writer"
   }
   ]
 }
