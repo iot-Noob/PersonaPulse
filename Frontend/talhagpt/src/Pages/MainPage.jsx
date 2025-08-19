@@ -3,7 +3,7 @@ import axios from "axios";
 import ChatWindow from "../components/ChatWindow";
 import { TextInputBox } from "../components/TextInputBox";
 import { AccordSec } from "../components/AccordSec";
-import { Chainmodal } from "../components/chainModal";
+import { Chainmodal } from "../components/ Chainmodal";
 import { useDispatch, useSelector } from "react-redux";
 import { startLoading, stopLoading, exit } from "../Redux/mouseSlice";
 import { getAiModels, setSettings, api_data } from "../Redux/dataSlice";
