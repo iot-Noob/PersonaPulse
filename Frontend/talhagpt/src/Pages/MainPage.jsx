@@ -3,7 +3,7 @@ import axios from "axios";
 import ChatWindow from "../components/ChatWindow";
 import { TextInputBox } from "../components/TextInputBox";
 import { AccordSec } from "../components/AccordSec";
-import ChainModal from "../components/ChainModal";
+import { Chainmodal } from "../components/chainModal";
 import { useDispatch, useSelector } from "react-redux";
 import { startLoading, stopLoading, exit } from "../Redux/mouseSlice";
 import { getAiModels, setSettings, api_data } from "../Redux/dataSlice";
@@ -358,7 +358,8 @@ const updateChainItem = (chainName, idx, key, value) => {
             {error && toast.error(error)}
           </div>
 
-          <ChainModal
+          <Chainmodal
+          
             addNewChain={addNewChain}
             chains={chains}
             removeChain={removeChain}

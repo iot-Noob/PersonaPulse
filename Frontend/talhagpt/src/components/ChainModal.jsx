@@ -2,7 +2,7 @@ import React from "react";
 import { LinkIcon, TrashIcon } from "@heroicons/react/16/solid";
 import ConfirmModal from "./ConfirmModal";
 
-const ChainModal = ({
+export const Chainmodal = ({
   chains,
   setError,
   setChains,
@@ -161,4 +161,4 @@ const ChainModal = ({
   );
 };
 
-export default ChainModal;
+ 
