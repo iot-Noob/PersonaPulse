@@ -8,12 +8,17 @@ import { ToastContainer } from "react-toastify";
 function App() {
   return (
 <>
-      <ToastContainer
+<ToastContainer
   position="top-right"
   autoClose={5000}
-  className="mt-0 mr-0"  // remove margin-top and margin-right
-  toastClassName="rounded-lg shadow-lg bg-base-100 text-base-content" // daisyUI theme colors & rounded corners
-  style={{ top: 0, right: 0, margin: 0, padding: 0, zIndex: 9999 }}
+  newestOnTop
+  closeOnClick
+  pauseOnHover
+  draggable
+  pauseOnFocusLoss
+  className="!m-0" // remove all margins
+  toastClassName="rounded-lg shadow-lg bg-base-100 text-base-content !z-[99999] !p-4" // high z-index and padding
+  style={{ top: 0, right: 0, zIndex: 99999 }} // override inline style if needed
 />
     <SuspenseSlice>
       <Routes>

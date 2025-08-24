@@ -172,7 +172,8 @@ async def simple_prompt(
     temperature: float = 0.3,
     character: Optional[gc] = None,
     use_local: bool = False,
-):
+    max_token:int=1024
+):# -> dict[str, Any | LocalModel | str | None] | dict[str, str ...:
     try:
         if not (0.0 <= temperature <= 1.0):
             raise HTTPException(status_code=400, detail="Temperature must be between 0.0 and 1.0")
@@ -191,14 +192,15 @@ async def simple_prompt(
                 model_name = cms.local_model
                 if not llm_manager.is_loaded(model_name):
                     raise HTTPException(404, detail="Requested model is not loaded in local cache")
-
+                 
                 if character is None:
+                     
                     result = await run_in_threadpool(
                         llm_manager.chat,
                         model_name,
                         prompt.prompt,
                         temperature,
-                        256  
+                        max_token
                     )
                 else:
                     persona_prompt = None
@@ -218,13 +220,13 @@ async def simple_prompt(
                         raise HTTPException(404, detail="Persona not found")
 
                     # You can modify this if your LLM expects full message chain instead
-                    combined_prompt = f"{persona_prompt.strip()}\n\n{prompt.prompt.strip()}"
+                    prompt_text = persona_prompt + "\n" + prompt.prompt
                     result = await run_in_threadpool(
                         llm_manager.chat,
                         model_name,
-                        combined_prompt,
+                        prompt_text,
                         temperature,
-                        256  # max_tokens
+                         max_token
                     )
 
                 return {
@@ -337,7 +339,7 @@ async def chain_res(cms:ModelSelection,creq: ChainRequest, temperature: float = 
                 model_name=model_name,
                 prompt=prompt,
                 temperature=temperature,
-                max_tokens=512
+                max_tokens=1024
             )
 
             return {

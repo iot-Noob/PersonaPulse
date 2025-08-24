@@ -55,7 +55,7 @@ class llmManager:
             return model
 
 
-    def stream_chat(self, model_name: str, prompt, max_tokens=256, temperature=0.2, top_p=0.9, top_k=50):
+    def stream_chat(self, model_name: str, prompt, max_tokens=1024, temperature=0.2, top_p=0.9, top_k=50):
         try:
             if model_name not in self._llm_cache:
                 raise ValueError("❌ Model not loaded or name is invalid")
@@ -71,7 +71,7 @@ class llmManager:
             is_mistral = any(x in model_filename for x in ["mistral", "openhermes", "dolphin"])
 
             if is_mistral:
-                prompt = f"{SYSTEM_MM}\n\nUser: {prompt}\nAssistant:"
+                prompt =  [{"role": "system", "content": SYSTEM_MM}, {"role": "user", "content": prompt}]
                 output_stream = model(
                     prompt=prompt,
                     max_tokens=max_tokens,
@@ -79,7 +79,7 @@ class llmManager:
                     top_p=top_p,
                     top_k=top_k,
                     stream=True,
-                    stop=["User:", "Assistant:"]
+                    stop=["<|endoftext|>"]
                 )
                 for chunk in output_stream:
                     yield chunk["choices"][0]["text"]
@@ -93,7 +93,7 @@ class llmManager:
                         top_k=top_k,
                         max_tokens=max_tokens,
                         stream=True,
-                        stop=["<|im_end|>"]
+                       stop=["<|endoftext|>"]
                     )
                     for chunk in output_stream:
                         yield chunk["choices"][0]["delta"].get("content", "")
@@ -106,14 +106,14 @@ class llmManager:
                         top_p=top_p,
                         top_k=top_k,
                         stream=True,
-                        stop=["User:", "Assistant:"]
+                        stop=["<|endoftext|>"]
                     )
                     for chunk in output_stream:
                         yield chunk["choices"][0]["text"]
         except Exception as e:
             raise ValueError(f"❌ LLM Stream Chat error: {e}")
 
-    def chat(self, model_name: str, prompt, max_tokens=256, temperature=0.2, top_p=0.9, top_k=50):
+    def chat(self, model_name: str, prompt, max_tokens=1024, temperature=0.2, top_p=0.9, top_k=50):
         try:
             if model_name not in self._llm_cache:
                 raise ValueError("❌ Model not loaded. Please load the model first.")
@@ -136,7 +136,7 @@ class llmManager:
                     temperature=temperature,
                     top_p=top_p,
                     top_k=top_k,
-                    stop=["User:", "Assistant:"]
+                   stop=["<|endoftext|>"]
                 )
                 return output["choices"][0]["text"].strip()
             else:
@@ -148,7 +148,7 @@ class llmManager:
                         top_p=top_p,
                         top_k=top_k,
                         max_tokens=max_tokens,
-                        stop=["<|im_end|>"]
+                        stop=["<|endoftext|>"]
                     )
                     return output["choices"][0]["message"]["content"].strip()
                 except TypeError:
@@ -159,7 +159,7 @@ class llmManager:
                         temperature=temperature,
                         top_p=top_p,
                         top_k=top_k,
-                        stop=["User:", "Assistant:"]
+                        stop=["<|endoftext|>"]
                     )
                     return output["choices"][0]["text"].strip()
         except Exception as e:

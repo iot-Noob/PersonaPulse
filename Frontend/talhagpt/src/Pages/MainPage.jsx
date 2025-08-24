@@ -139,6 +139,7 @@ const MainPage = () => {
             model: selectedModel,
             temperature,
             use_local: localModelEnabled,
+           max_token:1024
           };
 
           // Only include character if it exists
@@ -166,6 +167,7 @@ const MainPage = () => {
                 temperature,
                 use_local: localModelEnabled,
                 ...(selectedCharacter && { character: selectedCharacter }),
+                 max_token:1024
               },
             }
           );

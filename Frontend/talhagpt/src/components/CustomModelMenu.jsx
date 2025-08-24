@@ -27,10 +27,10 @@ const CustomModelMenu = ({ mid = "cmid" }) => {
 
   let get_cmodel = async () => {
     let res = await axios.get(`${API_EP}/get_aim`);
-    setAiModel(res.data);
+    setAiModel(res?.data);
 
     // Use res.data directly to find activated model
-    const activatedModel = res.data.find((v) => v.activated);
+ const activatedModel = res?.data?.models?.find((v) => v?.activated);
     if (activatedModel) {
       setSelectedModel(activatedModel.model_name);
     }
