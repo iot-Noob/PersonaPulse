@@ -11,6 +11,7 @@ class OpenAIModel(str, Enum):
 class LocalModel(str, Enum):
     llama3 = "Llama-3"
     mistral = "mistral-7b"
+    DeepSeek = "deepseek-coder-6.7b"
 
 class ModelSelection(BaseModel):
     local_model: Optional[LocalModel] = None
