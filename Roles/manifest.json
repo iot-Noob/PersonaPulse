@@ -5,12 +5,20 @@
       "subname": "Ask Ghanji Swag Funny"
     },
      {
+      "file": "AdolfHitler.json",
+      "subname": "Adolf Hitler"
+    },
+     {
       "file": "trump.json",
       "subname": "Trump(America President)"
     },
     {
       "file": "ags_tp.json",
       "subname": "Ask Ghanji Swag Improved"
+    },
+     {
+      "file": "DockerDaddy.json",
+      "subname": "Docker Dev"
     },
     {
       "file": "bb_mcm.json",
@@ -77,6 +85,10 @@
    {
     "file":"ai_ml_eng.json",
      "subname": "AI ML Prompt Eng"
+  },
+     {
+    "file":"Elara Voss.json",
+     "subname": "Elara Voss(Poet)"
   },
   {
     "file":"Dr. Roland Mahmood.json",
