@@ -4,6 +4,10 @@
       "file": "ags_funny.json",
       "subname": "Ask Ghanji Swag Funny"
     },
+    {
+      "file":"ai_cpp.json",
+      "subname":"AI Dev c++"
+    },
      {
       "file": "AdolfHitler.json",
       "subname": "Adolf Hitler"
