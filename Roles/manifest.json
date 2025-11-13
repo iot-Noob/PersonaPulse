@@ -4,6 +4,10 @@
       "file": "ags_funny.json",
       "subname": "Ask Ghanji Swag Funny"
     },
+     {
+      "file": "C++_crow_dev.json",
+      "subname": "C++ & Crow Dev"
+    },
     {
       "file":"ai_cpp.json",
       "subname":"AI Dev c++"
@@ -15,6 +19,10 @@
      {
       "file": "trump.json",
       "subname": "Trump(America President)"
+    },
+       {
+      "file": "Embedded.json",
+      "subname": "Embedded Systems engineer"
     },
     {
       "file": "ags_tp.json",
